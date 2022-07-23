@@ -12,13 +12,6 @@
         "assets": ["packages/zap-oidc/*.md"]
       }
     },
-    "publish": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "node tools/scripts/publish.mjs zap-oidc {args.ver} {args.tag}"
-      },
-      "dependsOn": ["build"]
-    },
     "lint": {
       "executor": "@nrwl/linter:eslint",
       "outputs": ["{options.outputFile}"],
