@@ -1,0 +1,32 @@
+{
+  "root": "packages/zap-oidc",
+  "sourceRoot": "packages/zap-oidc/src",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/zap-oidc",
+        "main": "packages/zap-oidc/src/index.ts",
+        "tsConfig": "packages/zap-oidc/tsconfig.lib.json",
+        "assets": ["packages/zap-oidc/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/zap-oidc/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["coverage/packages/zap-oidc"],
+      "options": {
+        "jestConfig": "packages/zap-oidc/jest.config.js",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": []
+}

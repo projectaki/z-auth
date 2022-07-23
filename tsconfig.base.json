@@ -14,7 +14,10 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
-    "paths": {}
+    "paths": {
+      "@zap.io/oidc-helper": ["packages/oidc-helper/src/index.ts"],
+      "@zap.io/zap-oidc": ["packages/zap-oidc/src/index.ts"]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }
