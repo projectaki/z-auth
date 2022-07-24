@@ -1,7 +1,7 @@
 {
   "projectType": "application",
   "sourceRoot": "apps/sample-auth/src",
-  "prefix": "zap.io",
+  "prefix": "z-auth",
   "targets": {
     "build": {
       "executor": "@angular-devkit/build-angular:browser",

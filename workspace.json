@@ -1,9 +1,9 @@
 {
   "version": 2,
   "projects": {
-    "oidc-helper": "packages/oidc-helper",
+    "oidc-utils": "packages/oidc-utils",
     "sample-auth": "apps/sample-auth",
-    "zap-oidc": "packages/zap-oidc",
-    "zap-oidc-angular": "libs/zap-oidc-angular"
+    "oidc-api": "packages/oidc-api",
+    "oidc-api-angular": "libs/oidc-api-angular"
   }
 }

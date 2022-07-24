@@ -1,5 +1,5 @@
 {
-  "name": "@zap.io/zap-oidc",
+  "name": "@z-auth/oidc-api",
   "version": "0.0.1",
   "type": "commonjs"
 }

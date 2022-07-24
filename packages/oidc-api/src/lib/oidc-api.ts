@@ -18,7 +18,7 @@ import {
   StorageService,
   trimTrailingSlash,
   validateIdToken,
-} from '@zap.io/oidc-helper';
+} from '@z-auth/oidc-utils';
 
 export class OIDCService {
   private isAuthenticated = false;

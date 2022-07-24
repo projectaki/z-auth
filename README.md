@@ -1,2 +1,3 @@
-# Zap.io
+# z-auth
+
 Coming soon...

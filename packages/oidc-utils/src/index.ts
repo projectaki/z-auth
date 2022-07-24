@@ -1,4 +1,4 @@
-export * from './lib/oidc-helper';
+export * from './lib/oidc-utils';
 export * from './lib/url-helper';
 export * from './lib/storage-service';
 export * from './lib/models';

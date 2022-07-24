@@ -1,5 +1,5 @@
 {
-  "name": "@zap.io/oidc-helper",
+  "name": "@z-auth/oidc-utils",
   "version": "0.0.1",
   "type": "commonjs"
 }
