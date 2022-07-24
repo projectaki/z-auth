@@ -76,12 +76,13 @@ export const getGrantType = (authConfig: AuthConfig) => {
     return 'authorization_code';
   }
 
-  return 'implicit';
+  return 'authorization_code';
 };
 
 export const createVerifierAndChallengePair = (length?: number) => {
   const verifier = createNonce(length ?? 32);
   const challenge = base64UrlEncode(sha256(verifier, 'ascii'));
+
   return [verifier, challenge];
 };
 
@@ -134,14 +135,15 @@ export const validateIdToken = (
   validateMacAlg();
   validateExpClaim();
   validateIatClaim();
-  validateNonce(nonce);
+  validateNonce();
   validateAcrClaim();
   validateAuthTimeClaim();
 
   return true;
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  function checkEncryption() {}
+  function checkEncryption() {
+    // not implemented for public clients
+  }
 
   function validateIssuer() {
     const registeredIssuerWithoutTrailingSlash = trimTrailingSlash(
@@ -232,14 +234,14 @@ export const validateIdToken = (
     }
   }
 
-  function validateNonce(sentNonce?: string) {
-    if (!sentNonce) return;
-    const { nonce } = payload;
-    if (!nonce) {
+  function validateNonce() {
+    if (!nonce) return;
+
+    if (!payload.nonce) {
       throw new Error('Nonce is required');
     }
 
-    if (!verifyChallenge(sentNonce, nonce)) {
+    if (!verifyChallenge(nonce, payload.nonce)) {
       throw new Error('Invalid nonce');
     }
   }

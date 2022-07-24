@@ -43,6 +43,8 @@ export type StateParams = AuthParams & {
   nonce: string;
   codeVerifier: string;
   sendUserBackTo: string;
+  discoveryDocument: DiscoveryDocument;
+  jwks: JWKS;
 };
 
 export type AuthErrorParams = {

@@ -13,12 +13,12 @@ export class AppComponent implements OnInit {
   private router = inject(Router);
 
   ngOnInit(): void {
-    this.auth.authResult$.subscribe((x) => {
-      console.log('auth complete', x);
+    this.auth.authState$.subscribe((x) => {
+      console.log('auth state', x);
     });
 
-    this.auth.isAuthenticated$.subscribe((x) => {
-      console.log('isAuthenticated', x);
+    this.auth.events$.subscribe((x) => {
+      console.log('auth event', x);
     });
   }
 }
