@@ -4,7 +4,7 @@ import { hexToBytes } from './encode-helper';
 export const sha256 = (str: string, returnType: 'hex' | 'ascii' = 'hex') => {
   const hex = KJUR.crypto.Util.sha256(str);
   const asciiOutput = String.fromCharCode(...hexToBytes(hex));
-  return asciiOutput;
+  return returnType === 'ascii' ? asciiOutput : hex;
 };
 
 export const sha256Async = async (str: string) => {

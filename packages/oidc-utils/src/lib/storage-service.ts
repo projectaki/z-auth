@@ -5,13 +5,13 @@ export class StorageService {
     this.storage = storage;
   }
 
-  get(key: string): any | null {
+  get<T>(key: string): T | null {
     const value = this.storage.getItem(key);
     if (!value) return null;
     return JSON.parse(value);
   }
 
-  set(key: string, value: any): void {
+  set<T>(key: string, value: T): void {
     const stringified = JSON.stringify(value);
     this.storage.setItem(key, stringified);
   }

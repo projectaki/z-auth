@@ -1,4 +1,4 @@
-export interface AuthConfig {
+export type AuthConfig = {
   responseType: 'code';
   clientId: string;
   redirectUri: string;
@@ -8,16 +8,16 @@ export interface AuthConfig {
   authorizeEndpoint?: string;
   tokenEndpoint?: string;
   endsessionEndpoint?: string;
-  jwks?: any;
+  jwks?: JWKS;
   queryParams?: QueryParams;
   validateDiscovery?: boolean;
   discovery?: boolean;
   clockSkewSeconds?: number;
   useHttps?: boolean;
   preserveRoute?: boolean;
-}
+};
 
-export interface AuthorizeUrlParams {
+type AuthBaseParams = {
   response_type: 'code';
   client_id: string;
   redirect_uri: string;
@@ -32,43 +32,55 @@ export interface AuthorizeUrlParams {
   id_token_hint?: string;
   login_hint?: string;
   acr_values?: string;
-  [key: string]: any;
-}
+};
 
-export interface AuthErrorParams {
-  error:
-    | 'access_denied'
-    | 'unauthorized_client'
-    | 'interaction_required'
-    | 'invalid_request'
-    | 'invalid_request_uri'
-    | 'invalid_request_object'
-    | 'login_required'
-    | 'unsupported_response_type'
-    | 'server_error'
-    | 'temporarily_unavailable'
-    | 'user_cancelled'
-    | 'invalid_client'
-    | 'invalid_grant'
-    | 'invalid_scope'
-    | 'user_selection_required'
-    | 'consent_required'
-    | 'request_not_supported'
-    | 'request_uri_not_supported'
-    | 'registration_not_supported';
+export type AuthParams = AuthBaseParams & QueryParams;
+
+export type QueryParams = Record<string, number | string | boolean>;
+
+export type StateParams = AuthParams & {
+  authResult: AuthResult;
+  nonce: string;
+  codeVerifier: string;
+  sendUserBackTo: string;
+};
+
+export type AuthErrorParams = {
+  error: AuthError;
   error_description?: string;
   error_uri?: string;
   state?: string;
-}
+};
 
-export interface DiscoveryDocument {
+type AuthError =
+  | 'access_denied'
+  | 'unauthorized_client'
+  | 'interaction_required'
+  | 'invalid_request'
+  | 'invalid_request_uri'
+  | 'invalid_request_object'
+  | 'login_required'
+  | 'unsupported_response_type'
+  | 'server_error'
+  | 'temporarily_unavailable'
+  | 'user_cancelled'
+  | 'invalid_client'
+  | 'invalid_grant'
+  | 'invalid_scope'
+  | 'user_selection_required'
+  | 'consent_required'
+  | 'request_not_supported'
+  | 'request_uri_not_supported'
+  | 'registration_not_supported';
+
+export type DiscoveryDocument = {
   issuer: string;
   authorization_endpoint: string;
   token_endpoint: string;
   jwks_uri: string;
-}
+};
 
-export interface IdToken {
+type IdTokenBase = {
   iss: string;
   sub: string;
   aud: string;
@@ -79,18 +91,30 @@ export interface IdToken {
   acr?: string;
   amr?: string;
   azp?: string;
-  [key: string]: any;
-}
+};
 
-export interface AuthResult {
+export type IdToken = IdTokenBase & QueryParams;
+
+export type AuthResult = {
   access_token: string;
   id_token: string;
   refresh_token: string;
   expires_in: number;
   scope: string;
   token_type: string;
-}
+};
 
-export interface QueryParams {
-  [key: string]: string | number | boolean;
-}
+export type JWKS = {
+  keys: JWK[];
+};
+
+export type JWK = {
+  alg: string;
+  kty: string;
+  use: string;
+  n: string;
+  e: string;
+  kid: string;
+  x5t: string;
+  x5c: string[];
+};

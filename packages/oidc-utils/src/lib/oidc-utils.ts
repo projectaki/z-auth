@@ -3,7 +3,7 @@ import { dateNowMsSinceEpoch } from './datetime-helper';
 import { base64UrlEncode, base64UrlDecode } from './encode-helper';
 import { sha256 } from './hash-helper';
 import { decodeJWt } from './jwt-helper';
-import { AuthConfig, QueryParams, AuthorizeUrlParams } from './models';
+import { AuthConfig, QueryParams, AuthParams, JWK } from './models';
 import { getQueryParams, getUrlWithoutParams } from './url-helper';
 
 const SKEW_DEFAULT = 0;
@@ -12,7 +12,7 @@ export const createParamsFromConfig = (
   authConfig: AuthConfig,
   extraParams?: QueryParams
 ) => {
-  const authUrlParams: AuthorizeUrlParams = {
+  const authUrlParams: AuthParams = {
     client_id: authConfig.clientId,
     redirect_uri: authConfig.redirectUri,
     response_type: authConfig.responseType,
@@ -37,13 +37,13 @@ export const createParamsFromConfig = (
 
 export const createAuthUrl = (
   url: string,
-  authUrlParams: AuthorizeUrlParams,
+  authUrlParams: AuthParams,
   codeChallenge?: string
 ) => {
   const keys = Object.keys(authUrlParams);
   const queryParams = new URLSearchParams();
   keys.forEach((key) => {
-    queryParams.append(key, authUrlParams[key]);
+    queryParams.append(key, authUrlParams[key].toString());
   });
   if (codeChallenge) queryParams.append('code_challenge', codeChallenge);
   if (codeChallenge) queryParams.append('code_challenge_method', 'S256');
@@ -179,7 +179,8 @@ export const validateIdToken = (
     const { kid, alg } = header;
 
     if (kid) {
-      const jwk = authConfig.jwks.keys.find((jwk: any) => jwk.kid === kid);
+      const jwk = authConfig.jwks?.keys.find((jwk: JWK) => jwk.kid === kid);
+      if (!jwk) throw new Error('Invalid kid');
       const pubKey = KEYUTIL.getKey(jwk) as jsrsasign.RSAKey;
 
       const isValid = KJUR.jws.JWS.verify(idToken, pubKey, [alg]);
@@ -187,7 +188,7 @@ export const validateIdToken = (
         throw new Error('Invalid signature');
       }
     } else {
-      const jwk = authConfig.jwks.keys.find((jwk: any) => jwk.alg === alg);
+      const jwk = authConfig.jwks?.keys.find((jwk: JWK) => jwk.alg === alg);
       if (!jwk)
         throw new Error(
           'There was no kid, and could not find jwk with matching alg'
