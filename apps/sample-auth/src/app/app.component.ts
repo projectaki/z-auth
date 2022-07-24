@@ -1,6 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
-import { OidcService } from '@zap.io/zap-oidc-angular';
+import { OidcService } from '@z-auth/oidc-api-angular';
 
 @Component({
   selector: 'zap-io-root',

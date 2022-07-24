@@ -15,9 +15,9 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@zap.io/oidc-helper": ["packages/oidc-helper/src/index.ts"],
-      "@zap.io/zap-oidc": ["packages/zap-oidc/src/index.ts"],
-      "@zap.io/zap-oidc-angular": ["libs/zap-oidc-angular/src/index.ts"]
+      "@z-auth/oidc-utils": ["packages/oidc-utils/src/index.ts"],
+      "@z-auth/oidc-api": ["packages/oidc-api/src/index.ts"],
+      "@z-auth/oidc-api-angular": ["libs/oidc-api-angular/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

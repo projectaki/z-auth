@@ -1,7 +1,7 @@
-# zap-oidc-angular
+# oidc-api-angular
 
 This library was generated with [Nx](https://nx.dev).
 
 ## Running unit tests
 
-Run `nx test zap-oidc-angular` to execute the unit tests.
+Run `nx test oidc-api-angular` to execute the unit tests.

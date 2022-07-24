@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { AuthResult, OIDCService, QueryParams } from '@zap.io/zap-oidc';
+import { AuthResult, OIDCService, QueryParams } from '@z-auth/oidc-api';
 import {
   BehaviorSubject,
   catchError,

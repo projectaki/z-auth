@@ -1,28 +1,28 @@
 {
-  "sourceRoot": "packages/zap-oidc/src",
+  "sourceRoot": "packages/oidc-api/src",
   "targets": {
     "build": {
       "executor": "@nrwl/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/packages/zap-oidc",
-        "main": "packages/zap-oidc/src/index.ts",
-        "tsConfig": "packages/zap-oidc/tsconfig.lib.json",
-        "assets": ["packages/zap-oidc/*.md"]
+        "outputPath": "dist/packages/oidc-api",
+        "main": "packages/oidc-api/src/index.ts",
+        "tsConfig": "packages/oidc-api/tsconfig.lib.json",
+        "assets": ["packages/oidc-api/*.md"]
       }
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",
       "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": ["packages/zap-oidc/**/*.ts"]
+        "lintFilePatterns": ["packages/oidc-api/**/*.ts"]
       }
     },
     "test": {
       "executor": "@nrwl/jest:jest",
-      "outputs": ["coverage/packages/zap-oidc"],
+      "outputs": ["coverage/packages/oidc-api"],
       "options": {
-        "jestConfig": "packages/zap-oidc/jest.config.ts",
+        "jestConfig": "packages/oidc-api/jest.config.ts",
         "passWithNoTests": true
       }
     }

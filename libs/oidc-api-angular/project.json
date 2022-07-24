@@ -1,29 +1,29 @@
 {
   "projectType": "library",
-  "sourceRoot": "libs/zap-oidc-angular/src",
-  "prefix": "zap.io",
+  "sourceRoot": "libs/oidc-api-angular/src",
+  "prefix": "z-auth",
   "targets": {
     "build": {
       "executor": "@nrwl/angular:package",
-      "outputs": ["dist/libs/zap-oidc-angular"],
+      "outputs": ["dist/libs/oidc-api-angular"],
       "options": {
-        "project": "libs/zap-oidc-angular/ng-package.json"
+        "project": "libs/oidc-api-angular/ng-package.json"
       },
       "configurations": {
         "production": {
-          "tsConfig": "libs/zap-oidc-angular/tsconfig.lib.prod.json"
+          "tsConfig": "libs/oidc-api-angular/tsconfig.lib.prod.json"
         },
         "development": {
-          "tsConfig": "libs/zap-oidc-angular/tsconfig.lib.json"
+          "tsConfig": "libs/oidc-api-angular/tsconfig.lib.json"
         }
       },
       "defaultConfiguration": "production"
     },
     "test": {
       "executor": "@nrwl/jest:jest",
-      "outputs": ["coverage/libs/zap-oidc-angular"],
+      "outputs": ["coverage/libs/oidc-api-angular"],
       "options": {
-        "jestConfig": "libs/zap-oidc-angular/jest.config.ts",
+        "jestConfig": "libs/oidc-api-angular/jest.config.ts",
         "passWithNoTests": true
       }
     },
@@ -31,8 +31,8 @@
       "executor": "@nrwl/linter:eslint",
       "options": {
         "lintFilePatterns": [
-          "libs/zap-oidc-angular/**/*.ts",
-          "libs/zap-oidc-angular/**/*.html"
+          "libs/oidc-api-angular/**/*.ts",
+          "libs/oidc-api-angular/**/*.html"
         ]
       }
     }

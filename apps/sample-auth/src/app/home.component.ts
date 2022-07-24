@@ -4,7 +4,7 @@ import {
   AUTH_CONFIG,
   base64Decode,
   OidcService,
-} from '@zap.io/zap-oidc-angular';
+} from '@z-auth/oidc-api-angular';
 import { map } from 'rxjs';
 
 @Component({
