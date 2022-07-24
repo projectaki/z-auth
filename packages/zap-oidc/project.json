@@ -1,5 +1,4 @@
 {
-  "root": "packages/zap-oidc",
   "sourceRoot": "packages/zap-oidc/src",
   "targets": {
     "build": {
@@ -23,7 +22,7 @@
       "executor": "@nrwl/jest:jest",
       "outputs": ["coverage/packages/zap-oidc"],
       "options": {
-        "jestConfig": "packages/zap-oidc/jest.config.js",
+        "jestConfig": "packages/zap-oidc/jest.config.ts",
         "passWithNoTests": true
       }
     }

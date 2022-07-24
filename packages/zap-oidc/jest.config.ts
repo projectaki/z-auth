@@ -1,4 +1,5 @@
-module.exports = {
+/* eslint-disable */
+export default {
   displayName: 'zap-oidc',
   preset: '../../jest.preset.js',
   globals: {

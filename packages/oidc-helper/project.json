@@ -1,5 +1,4 @@
 {
-  "root": "packages/oidc-helper",
   "sourceRoot": "packages/oidc-helper/src",
   "targets": {
     "build": {
@@ -23,7 +22,7 @@
       "executor": "@nrwl/jest:jest",
       "outputs": ["coverage/packages/oidc-helper"],
       "options": {
-        "jestConfig": "packages/oidc-helper/jest.config.js",
+        "jestConfig": "packages/oidc-helper/jest.config.ts",
         "passWithNoTests": true
       }
     }
