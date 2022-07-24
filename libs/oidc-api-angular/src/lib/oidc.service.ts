@@ -1,36 +1,26 @@
 import { inject, Injectable } from '@angular/core';
-import { AuthResult, OIDCService, QueryParams } from '@z-auth/oidc-api';
 import {
-  BehaviorSubject,
-  catchError,
-  filter,
-  of,
-  ReplaySubject,
-  throwError,
-  take,
-} from 'rxjs';
+  AuthenticationState,
+  BrowserStorageService,
+  OIDCApi,
+  QueryParams,
+} from '@z-auth/oidc-api';
+import { catchError, of, ReplaySubject, throwError } from 'rxjs';
 import { AUTH_CONFIG } from './injection-token';
+import { Event } from '@z-auth/oidc-api';
 
 @Injectable({
   providedIn: 'root',
 })
 export class OidcService {
-  auth = new OIDCService();
-
-  private authResult = new BehaviorSubject<AuthResult | undefined>(undefined);
-  public authResult$ = this.authResult.asObservable().pipe(
-    filter((x) => !!x),
-    take(1)
-  );
-
-  private isAuthenticated = new ReplaySubject<boolean>(1);
-  public isAuthenticated$ = this.isAuthenticated.asObservable();
-
   private config = inject(AUTH_CONFIG);
+  auth = new OIDCApi(new BrowserStorageService());
 
-  constructor() {
-    this.auth.setAuthStateChangeCb(this.authStateChangeCb);
-  }
+  private authState = new ReplaySubject<AuthenticationState>(1);
+  public authState$ = this.authState.asObservable();
+
+  private events = new ReplaySubject<Event>(1);
+  public events$ = this.events.asObservable();
 
   login = (params?: QueryParams) => {
     this.auth.login(params);
@@ -45,15 +35,8 @@ export class OidcService {
   };
 
   initAuth = () => {
-    const cb_2 = (x: AuthResult | void) => {
-      if (x) {
-        this.authResult.next(x);
-      }
-
-      return x;
-    };
-
-    return this.auth.initAuth(this.config, cb_2);
+    this.auth.registerEvents(this.authStateChangeCb, this.eventCb);
+    return this.auth.initAuth(this.config);
   };
 
   getAccessToken = () => {
@@ -63,18 +46,18 @@ export class OidcService {
   getIdToken = () => {
     return of(this.auth.getIdToken()).pipe(
       catchError(() => {
-        this.isAuthenticated.next(false);
+        this.authState.next(AuthenticationState.Unauthenticated);
 
         return throwError(() => 'No id token found');
       })
     );
   };
 
-  setStorageStrategy = (strategy: Storage) => {
-    this.auth.setStorageStrategy(strategy);
+  private authStateChangeCb: (authState: AuthenticationState) => void = (x) => {
+    this.authState.next(x);
   };
 
-  private authStateChangeCb: (authState: boolean) => void = (x) => {
-    this.isAuthenticated.next(x);
+  private eventCb: (event: Event) => void = (x) => {
+    this.events.next(x);
   };
 }

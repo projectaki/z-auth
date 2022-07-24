@@ -1,9 +1,7 @@
-export class StorageService {
-  private storage: Storage = sessionStorage;
+import { StorageService } from './storage-service';
 
-  setStorageStrategy(storage: Storage) {
-    this.storage = storage;
-  }
+export class BrowserStorageService implements StorageService {
+  constructor(private storage: Storage = sessionStorage) {}
 
   get<T>(key: string): T | null {
     const value = this.storage.getItem(key);

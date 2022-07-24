@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
+import { AuthenticationState } from '@z-auth/oidc-api';
 import {
   AUTH_CONFIG,
   base64Decode,
@@ -11,7 +12,10 @@ import { map } from 'rxjs';
   selector: 'zap-io-home',
   template: `
     <ng-container
-      *ngIf="auth.isAuthenticated$ | async as authed; else loggedOut"
+      *ngIf="
+        (auth.authState$ | async) === AuthenticationState.Authenticated;
+        else loggedOut
+      "
     >
       <button (click)="logout()">Log out</button>
     </ng-container>
@@ -34,6 +38,7 @@ import { map } from 'rxjs';
   imports: [CommonModule],
 })
 export class HomeComponent {
+  AuthenticationState = AuthenticationState;
   protected auth = inject(OidcService);
   authConfig = inject(AUTH_CONFIG);
   protected accessToken$ = this.auth.getAccessToken().pipe(
