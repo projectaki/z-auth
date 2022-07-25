@@ -3,90 +3,82 @@ import {
   createDiscoveryUrl,
   DiscoveryDocument,
   JWKS,
-  StateParams,
   trimTrailingSlash,
 } from '@z-auth/oidc-utils';
-import { getLocalSession } from './cache/cache-service';
-import { Event } from './events';
-import { BrowserStorageService } from './storage/browser-storage-service';
-import { StorageService } from './storage/storage-service';
+import { AuthStateService } from './auth-state-service';
+import { CacheService } from './cache-service';
 
 export class DiscoveryService {
   constructor(
-    private storageService: StorageService = new BrowserStorageService()
+    private config: AuthConfig,
+    private cacheService: CacheService,
+    private authStateService: AuthStateService
   ) {}
 
-  public getDiscoveryDocument(): DiscoveryDocument {
-    const doc = this.storageService.get<DiscoveryDocument>('discoveryDocument');
-    if (!doc) throw new Error('Discovery document is required!');
-
-    return doc;
-  }
-
-  public loadDiscoveryDocument = async (
-    config: AuthConfig,
-    emitEvent: (event: Event) => void
-  ): Promise<[DiscoveryDocument, JWKS]> => {
+  public loadDiscoveryDocument = async (): Promise<DiscoveryDocument> => {
     try {
-      let discoveryDocument =
-        this.storageService.get<DiscoveryDocument>('discoveryDocument');
-      if (!discoveryDocument) {
-        discoveryDocument = await this.loadDiscoveryDocumentFromWellKnown(
-          config
-        );
+      const discoveryDocument =
+        this.loadDiscoveryDocumentFromStorage() ??
+        (await this.loadDiscoveryDocumentFromWellKnown());
 
-        this.storageService.set('discoveryDocument', discoveryDocument);
-        emitEvent('DiscoveryDocumentLoaded');
-      } else {
-        console.log('discovery doc cached');
-      }
+      const jwks =
+        this.loadJwksFromStorage() ??
+        (await this.loadJwks(discoveryDocument.jwks_uri));
+      discoveryDocument.jwks = jwks;
 
-      if (config.validateDiscovery == null || !!config.validateDiscovery)
-        this.validateDiscoveryDocument(config, discoveryDocument!);
-
-      let jwks = this.storageService.get<JWKS>('jwks');
-      if (!jwks) {
-        jwks = await this.loadJwks();
-
-        this.storageService.set('jwks', jwks);
-        emitEvent('JwksLoaded');
-      } else {
-        console.log('Jwsk cached');
-      }
-
-      return [discoveryDocument!, jwks!];
+      return discoveryDocument;
     } catch (e) {
       console.error(e);
       throw e;
     }
   };
 
-  private loadDiscoveryDocumentFromWellKnown = async (config: AuthConfig) => {
-    const url = createDiscoveryUrl(config.issuer);
-    const response = await fetch(url, { method: 'GET' });
-    const discoveryDocument = await response.json();
+  private loadDiscoveryDocumentFromWellKnown =
+    async (): Promise<DiscoveryDocument> => {
+      const url = createDiscoveryUrl(this.config.issuer);
+      const response = await fetch(url, { method: 'GET' });
+      const discoveryDocument = await response.json();
+      if (!discoveryDocument)
+        throw new Error('Discovery document is required!');
+      if (this.config.validateDiscovery !== false)
+        this.validateDiscoveryDocument(discoveryDocument);
+      this.cacheService.set('discoveryDocument', discoveryDocument);
+      this.authStateService.emitEvent('DiscoveryDocumentLoaded');
+
+      return discoveryDocument;
+    };
+
+  private loadDiscoveryDocumentFromStorage = () => {
+    const discoveryDocument =
+      this.cacheService.get<DiscoveryDocument>('discoveryDocument');
+    if (discoveryDocument && this.config.validateDiscovery !== false)
+      this.validateDiscoveryDocument(discoveryDocument);
 
     return discoveryDocument;
   };
 
-  private validateDiscoveryDocument(
-    config: AuthConfig,
-    discoveryDocument: DiscoveryDocument
-  ) {
+  private validateDiscoveryDocument(discoveryDocument: DiscoveryDocument) {
     if (!discoveryDocument) throw new Error('Discovery document is required!');
 
     const issuerWithoutTrailingSlash = trimTrailingSlash(
       discoveryDocument.issuer
     );
-    if (issuerWithoutTrailingSlash !== config.issuer)
+    if (issuerWithoutTrailingSlash !== this.config.issuer)
       throw new Error('Invalid issuer in discovery document');
   }
 
-  private loadJwks = async () => {
-    const url = `${this.getDiscoveryDocument().jwks_uri}`;
+  private loadJwksFromStorage = () => {
+    const jwks = this.cacheService.get<JWKS>('jwks');
+
+    return jwks;
+  };
+
+  private loadJwks = async (uri: string) => {
     try {
-      const response = await fetch(url, { method: 'GET' });
+      const response = await fetch(uri, { method: 'GET' });
       const jwks = await response.json();
+      this.cacheService.set('jwks', jwks);
+      this.authStateService.emitEvent('JwksLoaded');
 
       return jwks;
     } catch (e) {

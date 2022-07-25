@@ -38,13 +38,12 @@ export type AuthParams = AuthBaseParams & QueryParams;
 
 export type QueryParams = Record<string, number | string | boolean>;
 
-export type StateParams = AuthParams & {
+export type AppStateParams = AuthParams & {
   authResult: AuthResult;
   nonce: string;
   codeVerifier: string;
   sendUserBackTo: string;
   discoveryDocument: DiscoveryDocument;
-  jwks: JWKS;
 };
 
 export type AuthErrorParams = {
@@ -80,6 +79,7 @@ export type DiscoveryDocument = {
   authorization_endpoint: string;
   token_endpoint: string;
   jwks_uri: string;
+  jwks: JWKS;
 };
 
 type IdTokenBase = {
