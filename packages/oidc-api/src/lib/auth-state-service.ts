@@ -1,42 +1,32 @@
-import { AuthConfig } from '@z-auth/oidc-utils';
 import { Event } from './events';
 
 export class AuthStateService {
   private authState = AuthenticationState.Unauthenticated;
-  private authConfig!: AuthConfig;
-  private authStateEvent?: (authState: AuthenticationState) => void;
-  private event?: (event: Event) => void;
+  private onAuthStateChange?: (authState: AuthenticationState) => void;
+  private onEvent?: (event: Event) => void;
 
   public getAuthState(): AuthenticationState {
     return this.authState;
   }
 
-  public getAuthConfig(): AuthConfig {
-    return this.authConfig;
-  }
-
   public registerAuthStateHandler = (
     authStateEvent: (authState: AuthenticationState) => void
   ) => {
-    this.authStateEvent = authStateEvent;
+    this.onAuthStateChange = authStateEvent;
   };
 
   public registerEventHandler = (event: (event: Event) => void) => {
-    this.event = event;
+    this.onEvent = event;
   };
 
   public setAuthState = (authState: AuthenticationState) => {
     this.authState = authState;
-    if (this.authStateEvent) this.authStateEvent(authState);
+    if (this.onAuthStateChange) this.onAuthStateChange(authState);
   };
 
   public emitEvent = (event: Event) => {
-    if (this.event) this.event(event);
+    if (this.onEvent) this.onEvent(event);
   };
-
-  public setAuthConfig(authConfig: AuthConfig) {
-    this.authConfig = authConfig;
-  }
 }
 
 export enum AuthenticationState {

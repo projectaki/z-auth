@@ -13,7 +13,6 @@ import {
   QueryParams,
   redirectTo,
   replaceUrlState,
-  StateParams,
   validateIdToken,
 } from '@z-auth/oidc-utils';
 import { AuthenticationState, AuthStateService } from './auth-state-service';
@@ -21,14 +20,16 @@ import { DiscoveryService } from './discovery-service';
 import { BrowserStorageService } from './storage/browser-storage-service';
 import { StorageService } from './storage/storage-service';
 import { Event } from './events';
-import { getLocalSession } from './cache/cache-service';
+import { CacheService } from './cache-service';
 
 export class OIDCApi {
-  private discoveryService = new DiscoveryService();
   private authStateService = new AuthStateService();
+  private cacheService = new CacheService(this.storageService);
+  private discoveryService?: DiscoveryService;
 
   constructor(
-    private storageService: StorageService = new BrowserStorageService()
+    private storageService: StorageService = new BrowserStorageService(),
+    private authConfig: AuthConfig = {} as AuthConfig
   ) {}
 
   registerEvents(
@@ -46,35 +47,30 @@ export class OIDCApi {
     const state = createNonce(42);
     const [nonce, hashedNonce] = createVerifierAndChallengePair(42);
     const [codeVerifier, codeChallenge] = createVerifierAndChallengePair();
-    const config = this.authStateService.getAuthConfig();
-    const params = createParamsFromConfig(config, extraParams);
+    const params = createParamsFromConfig(this.authConfig, extraParams);
     const mergedParams = {
       nonce,
       codeVerifier,
       sendUserBackTo: window.location.href,
       ...params,
     };
-    this.storageService.set('state', state);
-    this.storageService.set(state, mergedParams);
+    this.cacheService.set('state', state);
+    this.cacheService.set(state, mergedParams);
     const authUrl = createAuthUrl(
-      config.authorizeEndpoint!,
+      this.authConfig.authorizeEndpoint!,
       { ...params, state, nonce: hashedNonce },
       codeChallenge
     );
     redirectTo(authUrl);
   };
 
-  /**
-   *
-   * @param logoutCb Callback to be called when logout is complete.
-   */
   localLogout = () => {
     this.removeLocalSession();
-    redirectTo(this.authStateService.getAuthConfig().postLogoutRedirectUri);
+    redirectTo(this.authConfig.postLogoutRedirectUri);
   };
 
   logout = (queryParams?: QueryParams) => {
-    const config = this.authStateService.getAuthConfig();
+    const config = this.authConfig;
     if (!config.endsessionEndpoint)
       throw new Error('Endsession endpoint is not set!');
 
@@ -84,51 +80,22 @@ export class OIDCApi {
   };
 
   getAccessToken = () => {
-    const session = this.getLocalSession();
-    if (!session) return null;
-
-    return session.stateParams?.authResult.access_token;
+    return this.getAuthResult()?.access_token;
   };
 
   getIdToken = () => {
-    const session = this.getLocalSession();
-    if (!session) return null;
+    const authResult = this.getAuthResult();
 
-    const token = session.stateParams?.authResult.id_token;
+    const token = authResult?.id_token;
 
-    if (!token) return null;
-    const isValid = this.hasValidIdToken(token);
-
-    return isValid ? token : null;
+    return token ? (this.hasValidIdToken(token) ? token : null) : null;
   };
 
-  /**
-   * Initialize the authentication flow. Loads the discovery document (optionally from config) and stores it in the service. Checks
-   * if all of the configs are proprely set.
-   * @param authConfig AuthConfig
-   * @param authResultCb Callback to be called when auth redirect has been processed and validated. Returns the auth result,
-   * if the id token was valid, and returns void if the redirect uri route was loaded without query params.
-   */
   initAuth = async (authConfig: AuthConfig): Promise<void> => {
-    this.authStateService.setAuthState(AuthenticationState.Authenticating);
-    this.authStateService.setAuthConfig(authConfig);
-
-    if (authConfig.discovery == null || authConfig.discovery) {
-      const [discoveryDocument, jwks] =
-        await this.discoveryService.loadDiscoveryDocument(
-          authConfig,
-          this.authStateService.emitEvent
-        );
-      const newConfig = {
-        ...authConfig,
-        authorizeEndpoint: discoveryDocument.authorization_endpoint,
-        tokenEndpoint: discoveryDocument.token_endpoint,
-        jwks,
-      };
-      this.authStateService.setAuthConfig(newConfig);
-    }
+    this.authConfig = authConfig;
+    await this.loadDiscoveryIfEnabled();
     this.ensureAllConfigIsLoaded();
-    if (authConfig.useHttps !== false) this.tlsCheck();
+    this.tlsCheckIfEnabled();
     try {
       await this.runAuthFlow();
     } catch (e) {
@@ -137,52 +104,83 @@ export class OIDCApi {
     }
   };
 
-  private hasValidIdToken = (inputToken?: string): boolean => {
-    const session = this.getLocalSession();
-    if (!session) return false;
-    const { stateParams } = session;
+  private getAuthResult = () => {
+    const authResult = this.cacheService.get<AuthResult>('authResult');
+    if (!authResult) return null;
 
-    if (!session) return false;
-    const { authResult, nonce, max_age } = stateParams;
-    const token: string = inputToken ?? (<AuthResult>authResult).id_token;
+    return authResult;
+  };
+
+  private getAppState = () => {
+    const state = this.cacheService.get<string>('state');
+    if (!state) return null;
+    const appState = this.cacheService.get<any>(state);
+    if (!appState) return null;
+
+    return appState;
+  };
+
+  private async loadDiscoveryIfEnabled() {
+    if (this.authConfig.discovery !== false) {
+      this.discoveryService = new DiscoveryService(
+        this.authConfig,
+        this.cacheService,
+        this.authStateService
+      );
+
+      const discoveryDocument =
+        await this.discoveryService.loadDiscoveryDocument();
+      const newConfig = {
+        ...this.authConfig,
+        authorizeEndpoint: discoveryDocument.authorization_endpoint,
+        tokenEndpoint: discoveryDocument.token_endpoint,
+        jwks: discoveryDocument.jwks,
+      };
+      this.authConfig = newConfig;
+    }
+  }
+
+  private hasValidIdToken = (inputToken?: string): boolean => {
+    const cache = this.cacheService.getAll();
+    if (!cache) return false;
+    const token = inputToken ?? cache.authResult?.id_token;
+    if (!token) return false;
+
     const isValid: boolean = validateIdToken(
       token,
-      this.authStateService.getAuthConfig(),
-      nonce,
-      max_age
+      this.authConfig,
+      cache.nonce,
+      cache.max_age
     );
 
     return isValid;
   };
 
   private runAuthFlow = async () => {
-    const config = this.authStateService.getAuthConfig();
+    const config = this.authConfig;
     if (isAuthCallback(config)) {
-      const res = await this.getAuthResult();
+      this.authStateService.setAuthState(AuthenticationState.Authenticating);
+      const res = await this.processAuthResult();
       this.evaluateAuthState(res.id_token);
-      const session = this.getLocalSession();
-      if (!session) throw new Error('Expected session!');
-      const { state, stateParams } = session;
-      this.storageService.set(state, {
-        ...stateParams,
-        authResult: res,
-      });
-      if (stateParams.sendUserBackTo && config.preserveRoute !== false)
-        replaceUrlState(stateParams.sendUserBackTo);
+      const appState = this.getAppState();
+      this.cacheService.set('authResult', res);
+
+      if (appState.sendUserBackTo && config.preserveRoute !== false)
+        replaceUrlState(appState.sendUserBackTo);
       this.authStateService.emitEvent('AuthComplete');
     } else {
       this.evaluateAuthState();
     }
   };
 
-  private getAuthResult = async (): Promise<AuthResult> => {
+  private processAuthResult = async (): Promise<AuthResult> => {
     const params = getQueryParams();
     this.checkState(params);
 
     if (params.has('error')) throw new Error(<string>params.get('error'));
 
     try {
-      if (this.authStateService.getAuthConfig().responseType === 'code') {
+      if (this.authConfig.responseType === 'code') {
         const authResult = await this.handleCodeFlowRedirect(params);
 
         return authResult;
@@ -196,7 +194,7 @@ export class OIDCApi {
   private checkState = (params: URLSearchParams) => {
     const returnedState = params.get('state');
     if (!returnedState) throw new Error('State expected from query params!');
-    const storedState = this.storageService.get('state');
+    const storedState = this.cacheService.get('state');
     if (storedState !== returnedState) throw new Error('Invalid state!');
   };
 
@@ -206,7 +204,7 @@ export class OIDCApi {
     if (!params.has('code')) throw new Error('No code found in query params!');
 
     const code = <string>params.get('code');
-    replaceUrlState(this.authStateService.getAuthConfig().redirectUri);
+    replaceUrlState(this.authConfig.redirectUri);
 
     try {
       const data = await this.fetchTokensWithCode(code);
@@ -225,29 +223,22 @@ export class OIDCApi {
     this.authStateService.setAuthState(authState);
   };
 
-  private getLocalSession() {
-    return getLocalSession(this.storageService);
-  }
-
   private removeLocalSession = () => {
-    const state = this.storageService.get<string>('state');
+    const state = this.cacheService.get<string>('state');
     if (!state) return;
-    this.storageService.remove('state');
-    this.storageService.remove(state);
+    this.cacheService.clear();
     this.authStateService.setAuthState(AuthenticationState.Unauthenticated);
   };
 
   private fetchTokensWithCode = async (code: string): Promise<AuthResult> => {
-    const config = this.authStateService.getAuthConfig();
-    const session = this.getLocalSession();
-    if (!session) throw new Error('Expected session!');
+    const appState = this.getAppState();
     const body = createTokenRequestBody(
-      config,
+      this.authConfig,
       code,
-      session?.stateParams.codeVerifier
+      appState.codeVerifier
     );
     try {
-      const response = await fetch(config.tokenEndpoint!, {
+      const response = await fetch(this.authConfig.tokenEndpoint!, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -263,27 +254,26 @@ export class OIDCApi {
   };
 
   private ensureAllConfigIsLoaded = () => {
-    const config = this.authStateService.getAuthConfig();
-
-    if (!config) throw new Error('Missing authConfig');
-    if (!config.authorizeEndpoint)
+    if (!this.authConfig) throw new Error('Missing authConfig');
+    if (!this.authConfig.authorizeEndpoint)
       throw new Error(
         'Authorization endpoint is required, if not using discovery!'
       );
-    if (!config.tokenEndpoint)
+    if (!this.authConfig.tokenEndpoint)
       throw new Error('Token endpoint is required, if not using discovery!');
-    if (!config.jwks) throw new Error('Jwks is required!');
+    if (!this.authConfig.jwks) throw new Error('Jwks is required!');
   };
 
-  private tlsCheck = () => {
-    const config = this.authStateService.getAuthConfig();
-    if (!isHttps(config.issuer))
+  private tlsCheckIfEnabled = () => {
+    if (this.authConfig.useHttps === false) return;
+
+    if (!isHttps(this.authConfig.issuer))
       throw new Error('TLS check failed for issuer!');
-    if (!isHttps(config.authorizeEndpoint!))
+    if (!isHttps(this.authConfig.authorizeEndpoint!))
       throw new Error('TLS check failed for authorize endpoint!');
-    if (!isHttps(config.tokenEndpoint!))
+    if (!isHttps(this.authConfig.tokenEndpoint!))
       throw new Error('TLS check failed for token endpoint!');
-    if (!isHttps(config.endsessionEndpoint!))
+    if (!isHttps(this.authConfig.endsessionEndpoint!))
       throw new Error('TLS check failed for end session endpoint!');
   };
 }
