@@ -24,13 +24,15 @@ import { CacheService } from './cache-service';
 
 export class OIDCApi {
   private authStateService = new AuthStateService();
-  private cacheService = new CacheService(this.storageService);
+  private cacheService: CacheService;
   private discoveryService?: DiscoveryService;
 
   constructor(
-    private storageService: StorageService = new BrowserStorageService(),
+    storageService: StorageService = new BrowserStorageService(),
     private authConfig: AuthConfig = {} as AuthConfig
-  ) {}
+  ) {
+    this.cacheService = new CacheService(storageService);
+  }
 
   registerEvents(
     authStateEvent?: (authState: AuthenticationState) => void,
