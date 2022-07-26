@@ -15,9 +15,9 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@z-auth/oidc-utils": ["packages/oidc-utils/src/index.ts"],
       "@z-auth/oidc-api": ["packages/oidc-api/src/index.ts"],
-      "@z-auth/oidc-api-angular": ["libs/oidc-api-angular/src/index.ts"]
+      "@z-auth/oidc-api-angular": ["libs/oidc-api-angular/src/index.ts"],
+      "@z-auth/oidc-utils": ["packages/oidc-utils/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
