@@ -8,8 +8,8 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 const config = {
   title: 'z-auth',
   tagline: 'A typescript oidc library',
-  url: 'https://projectaki.github.io/',
-  baseUrl: '/z-auth/',
+  url: 'https://z-auth.com',
+  baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
