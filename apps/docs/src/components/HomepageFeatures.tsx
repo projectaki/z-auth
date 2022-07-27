@@ -11,22 +11,23 @@ type FeatureItem = {
 const FeatureList: FeatureItem[] = [
   {
     title: 'Easy to Use',
-    image: '/img/undraw_docusaurus_mountain.svg',
-    description: <>z-auth has a very simple and intuitive API.</>,
-  },
-  {
-    title: 'Extensible',
-    image: '/img/undraw_docusaurus_tree.svg',
+    image: '/img/easy.svg',
     description: (
       <>
-        z-auth is extensible. It is very easy to write wrapper libs to extend
-        functionality to specific frameworks.
+        Very simple API. It is also extensible so you can easily write framework
+        specific wrappers. Add authentication to your client app in a matter of
+        minutes.
       </>
     ),
   },
   {
+    title: 'Secure',
+    image: '/img/secure.svg',
+    description: <>Implemented following the OpenID Connect protocol.</>,
+  },
+  {
     title: 'Typescript',
-    image: '/img/undraw_docusaurus_react.svg',
+    image: '/img/ts-logo-256.svg',
     description: (
       <>
         Use it in any frontend framework which relies on Typescript or
