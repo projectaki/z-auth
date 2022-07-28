@@ -1,6 +1,7 @@
 import { base64UrlDecode } from './encode-helper';
+import { JWT } from './models';
 
-export const decodeJWt = (jwt: string) => {
+export const decodeJWt = (jwt: string): JWT => {
   const parts = jwt.split('.');
   if (parts.length !== 3) {
     throw new Error('Invalid JWT');

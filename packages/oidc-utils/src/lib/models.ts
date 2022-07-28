@@ -120,3 +120,9 @@ export type JWK = {
   x5t: string;
   x5c: string[];
 };
+
+export type JWT = {
+  header: any;
+  payload: any;
+  signature: string;
+};
