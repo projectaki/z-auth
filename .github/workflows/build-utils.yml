@@ -1,11 +1,14 @@
-name: Build and Deploy to GH pages
+name: Build utils to netlify
 on:
   workflow_dispatch:
 
 jobs:
   deploy:
     name: 'Deploy to Netlify'
+    runs-on: ubuntu-latest
+
     steps:
+      - uses: actions/checkout@v1
       - uses: jsmrcaga/action-netlify-deploy@v1.8.0
         with:
           NETLIFY_AUTH_TOKEN: ${{ secrets.UTILS_DEPLOY_TOKEN }}
