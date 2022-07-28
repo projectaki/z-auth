@@ -1,11 +1,13 @@
+import { base64UrlDecode } from './encode-helper';
+
 export const decodeJWt = (jwt: string) => {
   const parts = jwt.split('.');
   if (parts.length !== 3) {
     throw new Error('Invalid JWT');
   }
   try {
-    const header = JSON.parse(atob(parts[0]));
-    const payload = JSON.parse(atob(parts[1]));
+    const header = JSON.parse(base64UrlDecode(parts[0]));
+    const payload = JSON.parse(base64UrlDecode(parts[1]));
     const signature = parts[2];
     return { header, payload, signature };
   } catch (e) {

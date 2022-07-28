@@ -1,27 +1,29 @@
 {
   "projectType": "application",
-  "sourceRoot": "apps/sample-auth/src",
-  "prefix": "z-auth",
+  "sourceRoot": "apps/utils/src",
+  "prefix": "utils",
   "targets": {
     "build": {
       "executor": "@angular-devkit/build-angular:browser",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/apps/sample-auth",
-        "index": "apps/sample-auth/src/index.html",
-        "main": "apps/sample-auth/src/main.ts",
-        "polyfills": "apps/sample-auth/src/polyfills.ts",
-        "tsConfig": "apps/sample-auth/tsconfig.app.json",
+        "outputPath": "dist/apps/utils",
+        "index": "apps/utils/src/index.html",
+        "main": "apps/utils/src/main.ts",
+        "polyfills": "apps/utils/src/polyfills.ts",
+        "tsConfig": "apps/utils/tsconfig.app.json",
         "assets": [
-          "apps/sample-auth/src/favicon.ico",
-          "apps/sample-auth/src/assets"
+          "apps/utils/src/favicon.ico",
+          "apps/utils/src/assets",
+          "apps/utils/src/manifest.webmanifest"
         ],
         "styles": [
-          "apps/sample-auth/src/styles.css"
+          "apps/utils/src/styles.scss",
+          "node_modules/ngx-toastr/toastr.css"
         ],
-        "scripts": []
+        "scripts": [],
+        "serviceWorker": true,
+        "ngswConfigPath": "apps/utils/ngsw-config.json"
       },
       "configurations": {
         "production": {
@@ -39,8 +41,8 @@
           ],
           "fileReplacements": [
             {
-              "replace": "apps/sample-auth/src/environments/environment.ts",
-              "with": "apps/sample-auth/src/environments/environment.prod.ts"
+              "replace": "apps/utils/src/environments/environment.ts",
+              "with": "apps/utils/src/environments/environment.prod.ts"
             }
           ],
           "outputHashing": "all"
@@ -60,10 +62,10 @@
       "executor": "@angular-devkit/build-angular:dev-server",
       "configurations": {
         "production": {
-          "browserTarget": "sample-auth:build:production"
+          "browserTarget": "utils:build:production"
         },
         "development": {
-          "browserTarget": "sample-auth:build:development"
+          "browserTarget": "utils:build:development"
         }
       },
       "defaultConfiguration": "development"
@@ -71,25 +73,20 @@
     "extract-i18n": {
       "executor": "@angular-devkit/build-angular:extract-i18n",
       "options": {
-        "browserTarget": "sample-auth:build"
+        "browserTarget": "utils:build"
       }
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",
       "options": {
-        "lintFilePatterns": [
-          "apps/sample-auth/**/*.ts",
-          "apps/sample-auth/**/*.html"
-        ]
+        "lintFilePatterns": ["apps/utils/**/*.ts", "apps/utils/**/*.html"]
       }
     },
     "test": {
       "executor": "@nrwl/jest:jest",
-      "outputs": [
-        "coverage/apps/sample-auth"
-      ],
+      "outputs": ["coverage/apps/utils"],
       "options": {
-        "jestConfig": "apps/sample-auth/jest.config.ts",
+        "jestConfig": "apps/utils/jest.config.ts",
         "passWithNoTests": true
       }
     }

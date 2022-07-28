@@ -3,24 +3,34 @@
   "targets": {
     "build": {
       "executor": "@nrwl/js:tsc",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "outputPath": "dist/packages/oidc-utils",
         "main": "packages/oidc-utils/src/index.ts",
         "tsConfig": "packages/oidc-utils/tsconfig.lib.json",
-        "assets": ["packages/oidc-utils/*.md"]
+        "assets": [
+          "packages/oidc-utils/*.md"
+        ]
       }
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",
-      "outputs": ["{options.outputFile}"],
+      "outputs": [
+        "{options.outputFile}"
+      ],
       "options": {
-        "lintFilePatterns": ["packages/oidc-utils/**/*.ts"]
+        "lintFilePatterns": [
+          "packages/oidc-utils/**/*.ts"
+        ]
       }
     },
     "test": {
       "executor": "@nrwl/jest:jest",
-      "outputs": ["coverage/packages/oidc-utils"],
+      "outputs": [
+        "coverage/packages/oidc-utils"
+      ],
       "options": {
         "jestConfig": "packages/oidc-utils/jest.config.ts",
         "passWithNoTests": true
