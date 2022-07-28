@@ -5,6 +5,7 @@
     "oidc-api": "packages/oidc-api",
     "oidc-api-angular": "libs/oidc-api-angular",
     "oidc-utils": "packages/oidc-utils",
-    "sample-auth": "apps/sample-auth"
+    "sample-auth": "apps/sample-auth",
+    "utils": "apps/utils"
   }
 }

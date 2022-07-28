@@ -297,3 +297,16 @@ export const isAuthCallback = (
 
   return true;
 };
+
+export const validateAtHash = (idToken: string, accessToken: string) => {
+  const decodedIdToken = decodeJWt(idToken);
+  const at_hash = decodedIdToken.payload.at_hash;
+  if (!at_hash) return;
+  const accessTokenHash = sha256(accessToken, 'hex');
+  console.log(accessTokenHash.substring(0, accessTokenHash.length / 2));
+  const atHash = base64UrlEncode(
+    accessTokenHash.substring(0, accessTokenHash.length / 2)
+  );
+  console.log(atHash, at_hash);
+  if (atHash !== at_hash) throw new Error('Invalid at_hash');
+};

@@ -1,0 +1,15 @@
+name: Build and Deploy to GH pages
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: 'Deploy to Netlify'
+    steps:
+      - uses: jsmrcaga/action-netlify-deploy@v1.8.0
+        with:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.UTILS_DEPLOY_TOKEN }}
+          NETLIFY_SITE_ID: 3382c319-cd27-4916-9d92-290276ba9e30
+          NETLIFY_DEPLOY_TO_PROD: true
+          build_command: npm run build-utils
+          build_directory: dist/apps/utils

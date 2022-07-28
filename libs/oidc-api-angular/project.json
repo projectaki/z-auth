@@ -5,7 +5,9 @@
   "targets": {
     "build": {
       "executor": "@nrwl/angular:package",
-      "outputs": ["dist/libs/oidc-api-angular"],
+      "outputs": [
+        "dist/libs/oidc-api-angular"
+      ],
       "options": {
         "project": "libs/oidc-api-angular/ng-package.json"
       },
@@ -21,7 +23,9 @@
     },
     "test": {
       "executor": "@nrwl/jest:jest",
-      "outputs": ["coverage/libs/oidc-api-angular"],
+      "outputs": [
+        "coverage/libs/oidc-api-angular"
+      ],
       "options": {
         "jestConfig": "libs/oidc-api-angular/jest.config.ts",
         "passWithNoTests": true
