@@ -14,6 +14,7 @@ import {
   redirectTo,
   replaceUrlState,
   validateAtHash,
+  validateCHash,
   validateIdToken,
 } from '@z-auth/oidc-utils';
 import { AuthenticationState, AuthStateService } from './auth-state-service';
@@ -244,6 +245,7 @@ export class OIDCApi {
 
     try {
       const data = await this.fetchTokensWithCode(code);
+      validateCHash(data.id_token, code);
 
       return data;
     } catch (err) {

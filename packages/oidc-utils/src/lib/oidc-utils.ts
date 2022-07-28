@@ -3,7 +3,7 @@ import { dateNowMsSinceEpoch } from './datetime-helper';
 import { base64UrlEncode, base64UrlDecode } from './encode-helper';
 import { sha256 } from './hash-helper';
 import { decodeJWt } from './jwt-helper';
-import { AuthConfig, QueryParams, AuthParams, JWK } from './models';
+import { AuthConfig, QueryParams, AuthParams, JWK, JWT } from './models';
 import { getQueryParams, getUrlWithoutParams } from './url-helper';
 
 const SKEW_DEFAULT = 0;
@@ -299,14 +299,35 @@ export const isAuthCallback = (
 };
 
 export const validateAtHash = (idToken: string, accessToken: string) => {
+  try {
+    validateXHash(idToken, (x) => x.payload.at_hash, accessToken);
+  } catch (e) {
+    throw new Error('Invalid at_hash');
+  }
+};
+
+export const validateCHash = (idToken: string, code: string) => {
+  try {
+    validateXHash(idToken, (x) => x.payload.c_hash, code);
+  } catch (e) {
+    throw new Error('Invalid c_hash');
+  }
+};
+
+const validateXHash = (
+  idToken: string,
+  getXHash: (jwt: JWT) => string,
+  toValidate: string
+) => {
   const decodedIdToken = decodeJWt(idToken);
-  const at_hash = decodedIdToken.payload.at_hash;
-  if (!at_hash) return;
-  const accessTokenHash = sha256(accessToken, 'hex');
-  console.log(accessTokenHash.substring(0, accessTokenHash.length / 2));
-  const atHash = base64UrlEncode(
-    accessTokenHash.substring(0, accessTokenHash.length / 2)
-  );
-  console.log(atHash, at_hash);
-  if (atHash !== at_hash) throw new Error('Invalid at_hash');
+
+  const x_hash = getXHash(decodedIdToken.payload);
+
+  if (!x_hash) return;
+
+  const hash = sha256(toValidate, 'hex');
+
+  const xHash = base64UrlEncode(hash.substring(0, hash.length / 2));
+
+  if (xHash !== x_hash) throw new Error('Invalid');
 };
