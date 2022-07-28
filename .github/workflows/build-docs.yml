@@ -1,4 +1,4 @@
-name: Build and Deploy to GH pages
+name: Build docs to github pages
 on:
   workflow_dispatch:
 

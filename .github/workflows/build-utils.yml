@@ -1,10 +1,12 @@
-name: Build and Deploy to GH pages
+name: Build utils to netlify
 on:
   workflow_dispatch:
 
 jobs:
   deploy:
     name: 'Deploy to Netlify'
+    runs-on: ubuntu-latest
+
     steps:
       - uses: jsmrcaga/action-netlify-deploy@v1.8.0
         with:
