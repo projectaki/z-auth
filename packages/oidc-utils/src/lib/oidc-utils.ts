@@ -320,8 +320,7 @@ const validateXHash = (
   toValidate: string
 ) => {
   const decodedIdToken = decodeJWt(idToken);
-
-  const x_hash = getXHash(decodedIdToken.payload);
+  const x_hash = getXHash(decodedIdToken);
 
   if (!x_hash) return;
 

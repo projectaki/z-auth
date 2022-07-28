@@ -48,7 +48,7 @@ export class OIDCApi {
   }
 
   login = async (extraParams?: QueryParams) => {
-    this.removeLocalSession();
+    //this.removeLocalSession();
 
     const state = createNonce(42);
     const [nonce, hashedNonce] = createVerifierAndChallengePair(42);
