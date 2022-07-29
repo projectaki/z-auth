@@ -2,11 +2,14 @@ import {
   AuthConfig,
   AuthResult,
   createAuthUrl,
+  createIFrame,
   createLogoutUrl,
   createNonce,
   createParamsFromConfig,
+  createSessionCheckPostMessage,
   createTokenRequestBody,
   createVerifierAndChallengePair,
+  DiscoveryDocument,
   getQueryParams,
   isAuthCallback,
   isHttps,
@@ -28,6 +31,8 @@ export class OIDCApi {
   private authStateService = new AuthStateService();
   private cacheService: CacheService;
   private discoveryService?: DiscoveryService;
+  private discoveryDocument?: DiscoveryDocument;
+  private checkSessionIntervalId?: number;
 
   constructor(
     storageService: StorageService = new BrowserStorageService(),
@@ -148,14 +153,15 @@ export class OIDCApi {
         this.authStateService
       );
 
-      const discoveryDocument =
+      this.discoveryDocument =
         await this.discoveryService.loadDiscoveryDocument();
 
       const newConfig = {
         ...this.authConfig,
-        authorizeEndpoint: discoveryDocument.authorization_endpoint,
-        tokenEndpoint: discoveryDocument.token_endpoint,
-        jwks: discoveryDocument.jwks,
+        authorizeEndpoint: this.discoveryDocument.authorization_endpoint,
+        tokenEndpoint: this.discoveryDocument.token_endpoint,
+        jwks: this.discoveryDocument.jwks,
+        checkSessionIframe: this.discoveryDocument.check_session_iframe,
       };
 
       this.authConfig = newConfig;
@@ -210,6 +216,9 @@ export class OIDCApi {
     const params = getQueryParams();
 
     this.checkState(params);
+
+    const session_state = params.get('session_state');
+    if (session_state) this.cacheService.set('session_state', session_state);
 
     if (params.has('error')) throw new Error(<string>params.get('error'));
 
@@ -323,5 +332,69 @@ export class OIDCApi {
 
     if (!isHttps(this.authConfig.endsessionEndpoint!))
       throw new Error('TLS check failed for end session endpoint!');
+  };
+
+  private init_check_session = () => {
+    const CHECK_SESSION_INTERVAL_SECONDS =
+      this.authConfig.checkSessionIframeInterval ?? 5;
+
+    const iframe = createIFrame(
+      'check-session',
+      this.authConfig.checkSessionIframe!
+    );
+
+    const postMessage = () => {
+      if (!iframe.contentWindow) return;
+
+      const session_state = this.cacheService.get<string>('session_state');
+
+      if (!session_state) return;
+
+      const message = createSessionCheckPostMessage(
+        this.authConfig.clientId,
+        session_state
+      );
+
+      iframe.contentWindow.postMessage(message, this.authConfig.issuer);
+    };
+
+    const receiveMessage = (e: MessageEvent) => {
+      if (e.origin !== this.authConfig.issuer) {
+        return;
+      }
+      switch (e.data) {
+        case 'changed':
+          this.checkSessionChanged();
+          break;
+        case 'unchanged':
+          this.checkSessionUnchanged();
+          break;
+        case 'error':
+          this.checkSessionError();
+          break;
+      }
+    };
+
+    postMessage();
+    this.checkSessionIntervalId = setInterval(
+      postMessage,
+      CHECK_SESSION_INTERVAL_SECONDS * 1000
+    );
+
+    window.addEventListener('message', receiveMessage, false);
+  };
+
+  private checkSessionChanged = () => {
+    console.log('checkSessionChanged');
+    clearInterval(this.checkSessionIntervalId);
+  };
+
+  private checkSessionUnchanged = () => {
+    console.log('checkSessionUnchanged');
+  };
+
+  private checkSessionError = () => {
+    console.log('checkSessionError');
+    clearInterval(this.checkSessionIntervalId);
   };
 }

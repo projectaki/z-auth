@@ -15,6 +15,8 @@ export type AuthConfig = {
   clockSkewSeconds?: number;
   useHttps?: boolean;
   preserveRoute?: boolean;
+  checkSessionIframe?: string;
+  checkSessionIframeInterval?: number;
 };
 
 type AuthBaseParams = {
@@ -75,6 +77,7 @@ type AuthError =
   | 'registration_not_supported';
 
 export type DiscoveryDocument = {
+  check_session_iframe: string;
   issuer: string;
   authorization_endpoint: string;
   token_endpoint: string;
