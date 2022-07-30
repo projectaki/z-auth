@@ -33,6 +33,9 @@ import { map } from 'rxjs';
       <pre>{{ accesstoken.header | json }}</pre>
       <pre>{{ accesstoken.body | json }}</pre>
     </ng-container>
+    <ng-container *ngIf="refreshToken$ | async as refresh">
+      <button (click)="r()">Refresh tokens</button>
+    </ng-container>
   `,
   standalone: true,
   imports: [CommonModule],
@@ -71,6 +74,8 @@ export class HomeComponent {
     })
   );
 
+  protected refreshToken$ = this.auth.getRefreshToken();
+
   params = {
     max_age: 5,
   };
@@ -82,5 +87,10 @@ export class HomeComponent {
       returnTo: this.authConfig.postLogoutRedirectUri,
       client_id: this.authConfig.clientId,
     });
+  }
+
+  async r() {
+    const res = await this.auth.refreshTokens();
+    alert(JSON.stringify(res));
   }
 }

@@ -8,11 +8,12 @@ export const authConfig: AuthConfig = {
   responseType: 'code',
   authorizeEndpoint: 'https://identity-auth.eu.auth0.com/authorize',
   tokenEndpoint: 'https://identity-auth.eu.auth0.com/oauth/token',
-  scope: 'openid',
+  scope: 'openid offline_access',
   endsessionEndpoint: 'https://identity-auth.eu.auth0.com/v2/logout',
   queryParams: {
     audience: 'https://identity.com',
   },
   clockSkewSeconds: 60,
   preserveRoute: true,
+  disableRefreshTokenConsent: true,
 };

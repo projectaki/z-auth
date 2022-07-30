@@ -53,6 +53,14 @@ export class OidcService {
     );
   };
 
+  getRefreshToken = () => {
+    return of(this.auth.getRefreshToken());
+  };
+
+  refreshTokens() {
+    return {};
+  }
+
   private authStateChangeCb: (authState: AuthenticationState) => void = (x) => {
     this.authState.next(x);
   };
