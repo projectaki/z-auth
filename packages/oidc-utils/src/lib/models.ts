@@ -18,6 +18,7 @@ export type AuthConfig = {
   checkSessionIframe?: string;
   checkSessionIframeTimeout?: number;
   disableRefreshTokenConsent?: boolean;
+  disableCheckSession?: boolean;
 };
 
 type AuthBaseParams = {
