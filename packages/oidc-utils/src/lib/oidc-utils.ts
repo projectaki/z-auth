@@ -20,6 +20,7 @@ export const createParamsFromConfig = (
   };
 
   const queryParams = authConfig.queryParams;
+
   if (queryParams) {
     Object.keys(queryParams).forEach((key) => {
       authUrlParams[key] = queryParams[key];
@@ -36,7 +37,7 @@ export const createParamsFromConfig = (
 };
 
 export const createAuthUrl = (
-  url: string,
+  authConfig: AuthConfig,
   authUrlParams: AuthParams,
   codeChallenge?: string
 ) => {
@@ -51,7 +52,12 @@ export const createAuthUrl = (
   if (codeChallenge) queryParams.append('code_challenge', codeChallenge);
   if (codeChallenge) queryParams.append('code_challenge_method', 'S256');
 
-  const res = `${url}?${queryParams.toString()}`;
+  if (!authConfig.disableRefreshTokenConsent) {
+    if (authUrlParams['scope'].split(' ').includes('offline_access'))
+      queryParams.append('prompt', 'consent');
+  }
+
+  const res = `${authConfig.authorizeEndpoint}?${queryParams.toString()}`;
 
   return res;
 };
@@ -74,6 +80,20 @@ export const createTokenRequestBody = (
   const body = urlSearchParam.toString();
 
   return body;
+};
+
+export const createRefreshTokenRequestBody = (
+  authConfig: AuthConfig,
+  refreshToken: string
+) => {
+  const urlSearchParam = new URLSearchParams();
+
+  urlSearchParam.append('grant_type', 'refresh_token');
+  urlSearchParam.append('refresh_token', refreshToken);
+  urlSearchParam.append('client_id', authConfig.clientId);
+  urlSearchParam.append('scope', authConfig.scope);
+
+  return urlSearchParam.toString();
 };
 
 export const getGrantType = (authConfig: AuthConfig) => {

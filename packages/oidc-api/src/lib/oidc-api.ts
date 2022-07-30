@@ -6,6 +6,7 @@ import {
   createLogoutUrl,
   createNonce,
   createParamsFromConfig,
+  createRefreshTokenRequestBody,
   createSessionCheckPostMessage,
   createTokenRequestBody,
   createVerifierAndChallengePair,
@@ -53,8 +54,6 @@ export class OIDCApi {
   }
 
   login = async (extraParams?: QueryParams) => {
-    //this.removeLocalSession();
-
     const state = createNonce(42);
     const [nonce, hashedNonce] = createVerifierAndChallengePair(42);
     const [codeVerifier, codeChallenge] = createVerifierAndChallengePair();
@@ -71,7 +70,7 @@ export class OIDCApi {
     this.cacheService.set(state, mergedParams);
 
     const authUrl = createAuthUrl(
-      this.authConfig.authorizeEndpoint!,
+      this.authConfig,
       { ...params, state, nonce: hashedNonce },
       codeChallenge
     );
@@ -110,6 +109,10 @@ export class OIDCApi {
     return token ? (this.hasValidIdToken(token) ? token : null) : null;
   };
 
+  getRefreshToken = () => {
+    return this.getAuthResult()?.refresh_token;
+  };
+
   initAuth = async (authConfig: AuthConfig): Promise<void> => {
     this.authConfig = authConfig;
 
@@ -120,6 +123,7 @@ export class OIDCApi {
     try {
       await this.runAuthFlow();
     } catch (e) {
+      this.removeLocalSession();
       console.error(e);
       throw e;
     }
@@ -263,6 +267,43 @@ export class OIDCApi {
     }
   };
 
+  private refreshTokens = async (): Promise<AuthResult> => {
+    const newAuthResult = await this.fetchTokensWithRefreshToken();
+
+    validateAtHash(newAuthResult.id_token, newAuthResult.access_token);
+
+    const isValid = this.hasValidIdToken(newAuthResult.id_token);
+
+    if (!isValid) throw new Error('Invalid id token, after refreshing tokens!');
+
+    this.cacheService.set('authResult', newAuthResult);
+
+    this.authStateService.emitEvent('TokensRefreshed');
+
+    return newAuthResult;
+  };
+
+  private fetchTokensWithRefreshToken = async (): Promise<AuthResult> => {
+    const refreshToken =
+      this.cacheService.get<AuthResult>('authResult')?.refresh_token;
+
+    if (!refreshToken) throw new Error('No refresh token found!');
+    const requestBody = createRefreshTokenRequestBody(
+      this.authConfig,
+      refreshToken
+    );
+
+    const response = await fetch(this.authConfig.tokenEndpoint!, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: requestBody,
+    });
+
+    return response.json();
+  };
+
   private evaluateAuthState = (token?: string) => {
     const authState = this.hasValidIdToken(token)
       ? AuthenticationState.Authenticated
@@ -336,7 +377,7 @@ export class OIDCApi {
 
   private init_check_session = () => {
     const CHECK_SESSION_INTERVAL_SECONDS =
-      this.authConfig.checkSessionIframeInterval ?? 5;
+      this.authConfig.checkSessionIframeTimeout ?? 5;
 
     const iframe = createIFrame(
       'check-session',
