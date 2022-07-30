@@ -3,4 +3,8 @@ export type Event =
   | 'DiscoveryDocumentLoaded'
   | 'JwksLoaded'
   | 'AuthStarted'
-  | 'TokensRefreshed';
+  | 'TokensRefreshed'
+  | 'Logout'
+  | 'SessionChangedOnServer'
+  | 'SessionUnchangedOnServer'
+  | 'SessionErrorOnServer';

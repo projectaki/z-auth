@@ -214,6 +214,8 @@ export class OIDCApi {
     } else {
       this.evaluateAuthState();
     }
+
+    this.startCheckSessionIfPossible();
   };
 
   private processAuthResult = async (): Promise<AuthResult> => {
@@ -375,6 +377,14 @@ export class OIDCApi {
       throw new Error('TLS check failed for end session endpoint!');
   };
 
+  private startCheckSessionIfPossible = () => {
+    if (
+      this.authConfig.checkSessionIframe &&
+      !this.authConfig.disableCheckSession
+    )
+      this.init_check_session();
+  };
+
   private init_check_session = () => {
     const CHECK_SESSION_INTERVAL_SECONDS =
       this.authConfig.checkSessionIframeTimeout ?? 5;
@@ -416,7 +426,6 @@ export class OIDCApi {
       }
     };
 
-    postMessage();
     this.checkSessionIntervalId = setInterval(
       postMessage,
       CHECK_SESSION_INTERVAL_SECONDS * 1000
@@ -425,17 +434,25 @@ export class OIDCApi {
     window.addEventListener('message', receiveMessage, false);
   };
 
-  private checkSessionChanged = () => {
+  private checkSessionChanged = async () => {
+    this.authStateService.emitEvent('SessionChangedOnServer');
     console.log('checkSessionChanged');
     clearInterval(this.checkSessionIntervalId);
+    if (this.authConfig.responseType === 'code') {
+      await this.refreshTokens();
+      this.init_check_session();
+    }
   };
 
   private checkSessionUnchanged = () => {
     console.log('checkSessionUnchanged');
+    this.authStateService.emitEvent('SessionUnchangedOnServer');
   };
 
   private checkSessionError = () => {
     console.log('checkSessionError');
+    this.authStateService.emitEvent('SessionErrorOnServer');
     clearInterval(this.checkSessionIntervalId);
+    //Reauthenticate with prompt=login maybe?
   };
 }
