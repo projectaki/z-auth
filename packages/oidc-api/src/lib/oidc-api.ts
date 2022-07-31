@@ -395,8 +395,6 @@ export class OIDCApi {
     );
 
     const postMessage = () => {
-      if (!iframe.contentWindow) return;
-
       const session_state = this.cacheService.get<string>('session_state');
 
       if (!session_state) return;
@@ -406,7 +404,7 @@ export class OIDCApi {
         session_state
       );
 
-      iframe.contentWindow.postMessage(message, this.authConfig.issuer);
+      iframe.contentWindow?.postMessage(message, this.authConfig.issuer);
     };
 
     const receiveMessage = (e: MessageEvent) => {
@@ -436,23 +434,15 @@ export class OIDCApi {
 
   private checkSessionChanged = async () => {
     this.authStateService.emitEvent('SessionChangedOnServer');
-    console.log('checkSessionChanged');
     clearInterval(this.checkSessionIntervalId);
-    if (this.authConfig.responseType === 'code') {
-      await this.refreshTokens();
-      this.init_check_session();
-    }
   };
 
   private checkSessionUnchanged = () => {
-    console.log('checkSessionUnchanged');
     this.authStateService.emitEvent('SessionUnchangedOnServer');
   };
 
   private checkSessionError = () => {
-    console.log('checkSessionError');
     this.authStateService.emitEvent('SessionErrorOnServer');
     clearInterval(this.checkSessionIntervalId);
-    //Reauthenticate with prompt=login maybe?
   };
 }
