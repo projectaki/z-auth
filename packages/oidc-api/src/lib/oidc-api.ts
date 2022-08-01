@@ -54,6 +54,12 @@ export class OIDCApi {
   }
 
   login = async (extraParams?: QueryParams) => {
+    const authUrl = this.createAuthUrl(extraParams);
+
+    redirectTo(authUrl);
+  };
+
+  createAuthUrl = (extraParams?: QueryParams) => {
     const state = createNonce(42);
     const [nonce, hashedNonce] = createVerifierAndChallengePair(42);
     const [codeVerifier, codeChallenge] = createVerifierAndChallengePair();
@@ -75,7 +81,7 @@ export class OIDCApi {
       codeChallenge
     );
 
-    redirectTo(authUrl);
+    return authUrl;
   };
 
   localLogout = () => {
@@ -84,15 +90,34 @@ export class OIDCApi {
     redirectTo(this.authConfig.postLogoutRedirectUri);
   };
 
-  logout = (queryParams?: QueryParams) => {
+  createLogoutUrl = (extraParams?: QueryParams) => {
     const config = this.authConfig;
 
     if (!config.endsessionEndpoint)
       throw new Error('Endsession endpoint is not set!');
 
-    this.removeLocalSession();
+    const params: any = {};
 
-    const logoutUrl = createLogoutUrl(config.endsessionEndpoint, queryParams);
+    const idToken = this.cacheService.get<AuthResult>('authResult')?.id_token;
+
+    if (idToken) params['id_token_hint'] = idToken;
+
+    // const state = createNonce(42);
+
+    // params.state = state;
+
+    const logoutUrl = createLogoutUrl(config.endsessionEndpoint, {
+      ...extraParams,
+      ...params,
+    });
+
+    return logoutUrl;
+  };
+
+  logout = (queryParams?: QueryParams) => {
+    const logoutUrl = this.createLogoutUrl(queryParams);
+
+    this.removeLocalSession();
 
     redirectTo(logoutUrl);
   };
