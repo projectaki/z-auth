@@ -16,7 +16,7 @@ import { AUTH_CONFIG, OidcService } from '@z-auth/oidc-api-angular';
 if (environment.production) {
   enableProdMode();
 }
-
+console.log('starting app');
 bootstrapApplication(AppComponent, {
   providers: [
     importProvidersFrom(RouterModule.forRoot(routes)),

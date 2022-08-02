@@ -35,6 +35,9 @@ import { map } from 'rxjs';
     </ng-container>
     <ng-container *ngIf="refreshToken$ | async as refresh">
       <button (click)="r()">Refresh tokens</button>
+      <button (click)="createIframeAndListener()">
+        Refresh token with iframe
+      </button>
     </ng-container>
   `,
   standalone: true,
@@ -92,5 +95,9 @@ export class HomeComponent {
   async r() {
     const res = await this.auth.refreshTokens();
     alert(JSON.stringify(res));
+  }
+
+  createIframeAndListener() {
+    this.auth.createIframeAndListener();
   }
 }
