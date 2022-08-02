@@ -10,8 +10,10 @@ import {
   createSessionCheckPostMessage,
   createTokenRequestBody,
   createVerifierAndChallengePair,
+  decodeJWt,
   DiscoveryDocument,
   getQueryParams,
+  IdToken,
   isAuthCallback,
   isHttps,
   QueryParams,
@@ -53,13 +55,7 @@ export class OIDCApi {
       this.authStateService.registerEventHandler(event);
   }
 
-  login = async (extraParams?: QueryParams) => {
-    const authUrl = this.createAuthUrl(extraParams);
-
-    redirectTo(authUrl);
-  };
-
-  createAuthUrl = (extraParams?: QueryParams) => {
+  createAuthUrl(extraParams?: QueryParams) {
     const state = createNonce(42);
     const [nonce, hashedNonce] = createVerifierAndChallengePair(42);
     const [codeVerifier, codeChallenge] = createVerifierAndChallengePair();
@@ -73,7 +69,7 @@ export class OIDCApi {
     };
 
     this.cacheService.set('state', state);
-    this.cacheService.set(state, mergedParams);
+    this.cacheService.set('appState', mergedParams);
 
     const authUrl = createAuthUrl(
       this.authConfig,
@@ -82,6 +78,12 @@ export class OIDCApi {
     );
 
     return authUrl;
+  }
+
+  login = (extraParams?: QueryParams) => {
+    const authUrl = this.createAuthUrl(extraParams);
+
+    redirectTo(authUrl);
   };
 
   localLogout = () => {
@@ -167,7 +169,7 @@ export class OIDCApi {
 
     if (!state) return null;
 
-    const appState = this.cacheService.get<any>(state);
+    const appState = this.cacheService.get<any>('appState');
 
     if (!appState) return null;
 
@@ -243,19 +245,58 @@ export class OIDCApi {
     this.startCheckSessionIfPossible();
   };
 
-  private processAuthResult = async (): Promise<AuthResult> => {
-    const params = getQueryParams();
+  /**
+   * This will have an effect when we get in here after iframe checksession. If we are in the iframe, we MUST check if the token received is
+   * for the same end user, or if we even have received a token at all. If not then we need to remove the local session.
+   * @param authResult
+   * @returns
+   */
+  private evaluateAuthResult = (authResult: AuthResult) => {
+    try {
+      const previdToken =
+        this.cacheService.get<AuthResult>('authResult')?.id_token;
+
+      if (!authResult.id_token) {
+        throw new Error('No id_token found in auth result');
+      }
+
+      if (!previdToken) return;
+
+      const payload: IdToken = decodeJWt(authResult.id_token).payload;
+      const prevPayload: IdToken = decodeJWt(previdToken).payload;
+      console.log(payload, prevPayload);
+      if (payload.sub !== prevPayload.sub) {
+        throw new Error('Received a different id token for end user');
+      }
+    } catch (e) {
+      this.localLogout();
+      throw e;
+    }
+  };
+
+  private processAuthResult = async (
+    queryParams?: URLSearchParams
+  ): Promise<AuthResult> => {
+    const params = queryParams ?? getQueryParams();
 
     this.checkState(params);
-
-    const session_state = params.get('session_state');
-    if (session_state) this.cacheService.set('session_state', session_state);
 
     if (params.has('error')) throw new Error(<string>params.get('error'));
 
     try {
       if (this.authConfig.responseType === 'code') {
         const authResult = await this.handleCodeFlowRedirect(params);
+
+        if (
+          this.authConfig.disableCheckSession === false &&
+          this.authConfig.checkSessionIframe
+        )
+          this.evaluateAuthResult(authResult);
+
+        const session_state = params.get('session_state');
+
+        if (session_state)
+          this.cacheService.set('session_state', session_state);
 
         return authResult;
       } else return {} as AuthResult; // until other cases implemented
@@ -433,6 +474,7 @@ export class OIDCApi {
     };
 
     const receiveMessage = (e: MessageEvent) => {
+      console.log('Received message', e);
       if (e.origin !== this.authConfig.issuer) {
         return;
       }
@@ -470,4 +512,56 @@ export class OIDCApi {
     this.authStateService.emitEvent('SessionErrorOnServer');
     clearInterval(this.checkSessionIntervalId);
   };
+
+  createIframeAndListener() {
+    window.addEventListener(
+      'message',
+      async (e: MessageEvent) => {
+        if (e.origin !== window.location.origin) return;
+
+        const params = new URLSearchParams(e.data);
+
+        const code = params.get('code');
+
+        const session_state = params.get('session_state');
+
+        if (session_state)
+          this.cacheService.set('session_state', session_state);
+
+        this.checkState(params);
+
+        const data = await this.fetchTokensWithCode(code!);
+
+        validateCHash(data.id_token, code!);
+
+        validateAtHash(data.id_token, data.access_token);
+
+        const isValid = this.hasValidIdToken(data.id_token);
+
+        if (!isValid)
+          throw new Error('Invalid id token, after refreshing tokens!');
+
+        this.cacheService.set('authResult', data);
+
+        this.authStateService.emitEvent('TokensRefreshed');
+      },
+      false
+    );
+    const iframe = document.createElement('iframe');
+
+    iframe.setAttribute('style', 'display: none');
+
+    const extraParams: any = {
+      prompt: 'none',
+      redirect_uri: 'http://localhost:4200/silent-auth.html',
+    };
+
+    if (this.getIdToken()) extraParams['id_token_hint'] = this.getIdToken();
+
+    const url = this.createAuthUrl(extraParams);
+
+    iframe.src = url;
+
+    document.body.appendChild(iframe);
+  }
 }

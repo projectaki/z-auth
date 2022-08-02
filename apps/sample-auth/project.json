@@ -5,9 +5,7 @@
   "targets": {
     "build": {
       "executor": "@angular-devkit/build-angular:browser",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/apps/sample-auth",
         "index": "apps/sample-auth/src/index.html",
@@ -16,11 +14,10 @@
         "tsConfig": "apps/sample-auth/tsconfig.app.json",
         "assets": [
           "apps/sample-auth/src/favicon.ico",
-          "apps/sample-auth/src/assets"
+          "apps/sample-auth/src/assets",
+          "apps/sample-auth/src/silent-auth.html"
         ],
-        "styles": [
-          "apps/sample-auth/src/styles.css"
-        ],
+        "styles": ["apps/sample-auth/src/styles.css"],
         "scripts": []
       },
       "configurations": {
@@ -85,9 +82,7 @@
     },
     "test": {
       "executor": "@nrwl/jest:jest",
-      "outputs": [
-        "coverage/apps/sample-auth"
-      ],
+      "outputs": ["coverage/apps/sample-auth"],
       "options": {
         "jestConfig": "apps/sample-auth/jest.config.ts",
         "passWithNoTests": true

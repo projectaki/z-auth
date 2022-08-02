@@ -68,4 +68,8 @@ export class OidcService {
   private eventCb: (event: Event) => void = (x) => {
     this.events.next(x);
   };
+
+  createIframeAndListener() {
+    this.auth.createIframeAndListener();
+  }
 }
