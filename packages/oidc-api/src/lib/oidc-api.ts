@@ -29,6 +29,8 @@ import { BrowserStorageService } from './storage/browser-storage-service';
 import { StorageService } from './storage/storage-service';
 import { Event } from './events';
 import { CacheService } from './cache-service';
+import { HttpService } from './http/http-service';
+import { FetchHttpService } from './http/fetch-http-service';
 
 export class OIDCApi {
   private authStateService = new AuthStateService();
@@ -39,7 +41,8 @@ export class OIDCApi {
 
   constructor(
     storageService: StorageService = new BrowserStorageService(),
-    private authConfig: AuthConfig = {} as AuthConfig
+    private authConfig: AuthConfig = {} as AuthConfig,
+    private httpService: HttpService = new FetchHttpService()
   ) {
     this.cacheService = new CacheService(storageService);
   }
@@ -181,7 +184,8 @@ export class OIDCApi {
       this.discoveryService = new DiscoveryService(
         this.authConfig,
         this.cacheService,
-        this.authStateService
+        this.authStateService,
+        this.httpService
       );
 
       this.discoveryDocument =
@@ -356,20 +360,21 @@ export class OIDCApi {
       this.cacheService.get<AuthResult>('authResult')?.refresh_token;
 
     if (!refreshToken) throw new Error('No refresh token found!');
+
     const requestBody = createRefreshTokenRequestBody(
       this.authConfig,
       refreshToken
     );
 
-    const response = await fetch(this.authConfig.tokenEndpoint!, {
-      method: 'POST',
-      headers: {
+    const tokenResponse = await this.httpService.post<AuthResult>(
+      this.authConfig.tokenEndpoint!,
+      requestBody,
+      {
         'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: requestBody,
-    });
+      }
+    );
 
-    return response.json();
+    return tokenResponse;
   };
 
   private evaluateAuthState = (token?: string) => {
@@ -399,15 +404,15 @@ export class OIDCApi {
     );
 
     try {
-      const response = await fetch(this.authConfig.tokenEndpoint!, {
-        method: 'POST',
-        headers: {
+      const tokenResponse = await this.httpService.post<AuthResult>(
+        this.authConfig.tokenEndpoint!,
+        body,
+        {
           'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: body,
-      });
+        }
+      );
 
-      return response.json();
+      return tokenResponse;
     } catch (err) {
       console.error(err);
       throw err;
