@@ -7,12 +7,14 @@ import {
 } from '@z-auth/oidc-utils';
 import { AuthStateService } from './auth-state-service';
 import { CacheService } from './cache-service';
+import { HttpService } from './http/http-service';
 
 export class DiscoveryService {
   constructor(
     private config: AuthConfig,
     private cacheService: CacheService,
-    private authStateService: AuthStateService
+    private authStateService: AuthStateService,
+    private httpService: HttpService
   ) {}
 
   public loadDiscoveryDocument = async (): Promise<DiscoveryDocument> => {
@@ -36,13 +38,19 @@ export class DiscoveryService {
   private loadDiscoveryDocumentFromWellKnown =
     async (): Promise<DiscoveryDocument> => {
       const url = createDiscoveryUrl(this.config.issuer);
-      const response = await fetch(url, { method: 'GET' });
-      const discoveryDocument = await response.json();
+
+      const discoveryDocument = await this.httpService.get<DiscoveryDocument>(
+        url
+      );
+
       if (!discoveryDocument)
         throw new Error('Discovery document is required!');
+
       if (this.config.validateDiscovery !== false)
         this.validateDiscoveryDocument(discoveryDocument);
+
       this.cacheService.set('discoveryDocument', discoveryDocument);
+
       this.authStateService.emitEvent('DiscoveryDocumentLoaded');
 
       return discoveryDocument;
@@ -75,9 +83,10 @@ export class DiscoveryService {
 
   private loadJwks = async (uri: string) => {
     try {
-      const response = await fetch(uri, { method: 'GET' });
-      const jwks = await response.json();
+      const jwks = await this.httpService.get<JWKS>(uri);
+
       this.cacheService.set('jwks', jwks);
+
       this.authStateService.emitEvent('JwksLoaded');
 
       return jwks;
