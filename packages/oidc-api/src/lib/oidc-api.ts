@@ -31,18 +31,21 @@ import { Event } from './events';
 import { CacheService } from './cache-service';
 import { HttpService } from './http/http-service';
 import { FetchHttpService } from './http/fetch-http-service';
+import { Logger } from './logger/logger';
+import { DefaultLogger } from './logger/default-logger';
 
 export class OIDCApi {
+  private discoveryDocument?: DiscoveryDocument;
+  private checkSessionId?: number;
   private authStateService = new AuthStateService();
   private cacheService: CacheService;
   private discoveryService?: DiscoveryService;
-  private discoveryDocument?: DiscoveryDocument;
-  private checkSessionIntervalId?: number;
 
   constructor(
     storageService: StorageService = new BrowserStorageService(),
     private authConfig: AuthConfig = {} as AuthConfig,
-    private httpService: HttpService = new FetchHttpService()
+    private httpService: HttpService = new FetchHttpService(),
+    private logger: Logger = new DefaultLogger()
   ) {
     this.cacheService = new CacheService(storageService);
   }
@@ -496,7 +499,7 @@ export class OIDCApi {
       }
     };
 
-    this.checkSessionIntervalId = setInterval(
+    this.checkSessionId = setInterval(
       postMessage,
       CHECK_SESSION_INTERVAL_SECONDS * 1000
     );
@@ -506,7 +509,7 @@ export class OIDCApi {
 
   private checkSessionChanged = async () => {
     this.authStateService.emitEvent('SessionChangedOnServer');
-    clearInterval(this.checkSessionIntervalId);
+    clearInterval(this.checkSessionId);
   };
 
   private checkSessionUnchanged = () => {
@@ -515,7 +518,7 @@ export class OIDCApi {
 
   private checkSessionError = () => {
     this.authStateService.emitEvent('SessionErrorOnServer');
-    clearInterval(this.checkSessionIntervalId);
+    clearInterval(this.checkSessionId);
   };
 
   createIframeAndListener() {
