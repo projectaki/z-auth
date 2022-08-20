@@ -23,22 +23,23 @@ import {
   validateCHash,
   validateIdToken,
 } from '@z-auth/oidc-utils';
-import { AuthenticationState, AuthStateService } from './auth-state-service';
+import { EventService } from './events/event-service';
 import { DiscoveryService } from './discovery-service';
 import { BrowserStorageService } from './storage/browser-storage-service';
 import { StorageService } from './storage/storage-service';
-import { Event } from './events';
-import { CacheService } from './cache-service';
+import { StorageWrapperService } from './storage/storage-wrapper-service';
 import { HttpService } from './http/http-service';
 import { FetchHttpService } from './http/fetch-http-service';
 import { Logger } from './logger/logger';
 import { DefaultLogger } from './logger/default-logger';
+import { AuthenticationState } from './events/auth-state';
+import { Event } from './events/events';
 
 export class OIDCApi {
   private discoveryDocument?: DiscoveryDocument;
   private checkSessionId?: number;
-  private authStateService = new AuthStateService();
-  private cacheService: CacheService;
+  private eventService = new EventService();
+  private storageService: StorageWrapperService;
   private discoveryService?: DiscoveryService;
 
   constructor(
@@ -47,7 +48,7 @@ export class OIDCApi {
     private httpService: HttpService = new FetchHttpService(),
     private logger: Logger = new DefaultLogger()
   ) {
-    this.cacheService = new CacheService(storageService);
+    this.storageService = new StorageWrapperService(storageService);
   }
 
   registerEvents(
@@ -55,10 +56,10 @@ export class OIDCApi {
     event?: (event: Event) => void
   ) {
     typeof authStateEvent === 'function' &&
-      this.authStateService.registerAuthStateHandler(authStateEvent);
+      this.eventService.registerAuthStateHandler(authStateEvent);
 
     typeof event === 'function' &&
-      this.authStateService.registerEventHandler(event);
+      this.eventService.registerEventHandler(event);
   }
 
   createAuthUrl(extraParams?: QueryParams) {
@@ -74,8 +75,8 @@ export class OIDCApi {
       ...params,
     };
 
-    this.cacheService.set('state', state);
-    this.cacheService.set('appState', mergedParams);
+    this.storageService.set('state', state);
+    this.storageService.set('appState', mergedParams);
 
     const authUrl = createAuthUrl(
       this.authConfig,
@@ -106,7 +107,7 @@ export class OIDCApi {
 
     const params: any = {};
 
-    const idToken = this.cacheService.get<AuthResult>('authResult')?.id_token;
+    const idToken = this.storageService.get<AuthResult>('authResult')?.id_token;
 
     if (idToken) params['id_token_hint'] = idToken;
 
@@ -163,7 +164,7 @@ export class OIDCApi {
   };
 
   private getAuthResult = () => {
-    const authResult = this.cacheService.get<AuthResult>('authResult');
+    const authResult = this.storageService.get<AuthResult>('authResult');
 
     if (!authResult) return null;
 
@@ -171,11 +172,11 @@ export class OIDCApi {
   };
 
   private getAppState = () => {
-    const state = this.cacheService.get<string>('state');
+    const state = this.storageService.get<string>('state');
 
     if (!state) return null;
 
-    const appState = this.cacheService.get<any>('appState');
+    const appState = this.storageService.get<any>('appState');
 
     if (!appState) return null;
 
@@ -186,8 +187,8 @@ export class OIDCApi {
     if (this.authConfig.discovery !== false) {
       this.discoveryService = new DiscoveryService(
         this.authConfig,
-        this.cacheService,
-        this.authStateService,
+        this.storageService,
+        this.eventService,
         this.httpService
       );
 
@@ -207,7 +208,7 @@ export class OIDCApi {
   }
 
   private hasValidIdToken = (inputToken?: string): boolean => {
-    const cache = this.cacheService.getAll();
+    const cache = this.storageService.getAll();
 
     if (!cache) return false;
 
@@ -229,7 +230,7 @@ export class OIDCApi {
     const config = this.authConfig;
 
     if (isAuthCallback(config)) {
-      this.authStateService.setAuthState(AuthenticationState.Authenticating);
+      this.eventService.setAuthState(AuthenticationState.Authenticating);
 
       const res = await this.processAuthResult();
 
@@ -237,14 +238,14 @@ export class OIDCApi {
 
       this.evaluateAuthState(res.id_token);
 
+      this.storageService.set('authResult', res);
+      
       const appState = this.getAppState();
-
-      this.cacheService.set('authResult', res);
 
       if (appState.sendUserBackTo && config.preserveRoute !== false)
         replaceUrlState(appState.sendUserBackTo);
 
-      this.authStateService.emitEvent('AuthComplete');
+      this.eventService.emitEvent('AuthComplete');
     } else {
       this.evaluateAuthState();
     }
@@ -261,7 +262,7 @@ export class OIDCApi {
   private evaluateAuthResult = (authResult: AuthResult) => {
     try {
       const previdToken =
-        this.cacheService.get<AuthResult>('authResult')?.id_token;
+        this.storageService.get<AuthResult>('authResult')?.id_token;
 
       if (!authResult.id_token) {
         throw new Error('No id_token found in auth result');
@@ -303,7 +304,7 @@ export class OIDCApi {
         const session_state = params.get('session_state');
 
         if (session_state)
-          this.cacheService.set('session_state', session_state);
+          this.storageService.set('session_state', session_state);
 
         return authResult;
       } else return {} as AuthResult; // until other cases implemented
@@ -318,7 +319,7 @@ export class OIDCApi {
 
     if (!returnedState) throw new Error('State expected from query params!');
 
-    const storedState = this.cacheService.get('state');
+    const storedState = this.storageService.get('state');
 
     if (storedState !== returnedState) throw new Error('Invalid state!');
   };
@@ -351,16 +352,16 @@ export class OIDCApi {
 
     if (!isValid) throw new Error('Invalid id token, after refreshing tokens!');
 
-    this.cacheService.set('authResult', newAuthResult);
+    this.storageService.set('authResult', newAuthResult);
 
-    this.authStateService.emitEvent('TokensRefreshed');
+    this.eventService.emitEvent('TokensRefreshed');
 
     return newAuthResult;
   };
 
   private fetchTokensWithRefreshToken = async (): Promise<AuthResult> => {
     const refreshToken =
-      this.cacheService.get<AuthResult>('authResult')?.refresh_token;
+      this.storageService.get<AuthResult>('authResult')?.refresh_token;
 
     if (!refreshToken) throw new Error('No refresh token found!');
 
@@ -385,16 +386,16 @@ export class OIDCApi {
       ? AuthenticationState.Authenticated
       : AuthenticationState.Unauthenticated;
 
-    this.authStateService.setAuthState(authState);
+    this.eventService.setAuthState(authState);
   };
 
   private removeLocalSession = () => {
-    const state = this.cacheService.get<string>('state');
+    const state = this.storageService.get<string>('state');
 
     if (!state) return;
 
-    this.cacheService.clear();
-    this.authStateService.setAuthState(AuthenticationState.Unauthenticated);
+    this.storageService.clear();
+    this.eventService.setAuthState(AuthenticationState.Unauthenticated);
   };
 
   private fetchTokensWithCode = async (code: string): Promise<AuthResult> => {
@@ -469,7 +470,7 @@ export class OIDCApi {
     );
 
     const postMessage = () => {
-      const session_state = this.cacheService.get<string>('session_state');
+      const session_state = this.storageService.get<string>('session_state');
 
       if (!session_state) return;
 
@@ -508,16 +509,16 @@ export class OIDCApi {
   };
 
   private checkSessionChanged = async () => {
-    this.authStateService.emitEvent('SessionChangedOnServer');
+    this.eventService.emitEvent('SessionChangedOnServer');
     clearInterval(this.checkSessionId);
   };
 
   private checkSessionUnchanged = () => {
-    this.authStateService.emitEvent('SessionUnchangedOnServer');
+    this.eventService.emitEvent('SessionUnchangedOnServer');
   };
 
   private checkSessionError = () => {
-    this.authStateService.emitEvent('SessionErrorOnServer');
+    this.eventService.emitEvent('SessionErrorOnServer');
     clearInterval(this.checkSessionId);
   };
 
@@ -534,7 +535,7 @@ export class OIDCApi {
         const session_state = params.get('session_state');
 
         if (session_state)
-          this.cacheService.set('session_state', session_state);
+          this.storageService.set('session_state', session_state);
 
         this.checkState(params);
 
@@ -549,9 +550,9 @@ export class OIDCApi {
         if (!isValid)
           throw new Error('Invalid id token, after refreshing tokens!');
 
-        this.cacheService.set('authResult', data);
+        this.storageService.set('authResult', data);
 
-        this.authStateService.emitEvent('TokensRefreshed');
+        this.eventService.emitEvent('TokensRefreshed');
       },
       false
     );

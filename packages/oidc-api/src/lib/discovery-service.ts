@@ -5,15 +5,15 @@ import {
   JWKS,
   trimTrailingSlash,
 } from '@z-auth/oidc-utils';
-import { AuthStateService } from './auth-state-service';
-import { CacheService } from './cache-service';
+import { EventService } from './events/event-service';
+import { StorageWrapperService } from './storage/storage-wrapper-service';
 import { HttpService } from './http/http-service';
 
 export class DiscoveryService {
   constructor(
     private config: AuthConfig,
-    private cacheService: CacheService,
-    private authStateService: AuthStateService,
+    private storageService: StorageWrapperService,
+    private eventService: EventService,
     private httpService: HttpService
   ) {}
 
@@ -49,16 +49,16 @@ export class DiscoveryService {
       if (this.config.validateDiscovery !== false)
         this.validateDiscoveryDocument(discoveryDocument);
 
-      this.cacheService.set('discoveryDocument', discoveryDocument);
+      this.storageService.set('discoveryDocument', discoveryDocument);
 
-      this.authStateService.emitEvent('DiscoveryDocumentLoaded');
+      this.eventService.emitEvent('DiscoveryDocumentLoaded');
 
       return discoveryDocument;
     };
 
   private loadDiscoveryDocumentFromStorage = () => {
     const discoveryDocument =
-      this.cacheService.get<DiscoveryDocument>('discoveryDocument');
+      this.storageService.get<DiscoveryDocument>('discoveryDocument');
     if (discoveryDocument && this.config.validateDiscovery !== false)
       this.validateDiscoveryDocument(discoveryDocument);
 
@@ -76,7 +76,7 @@ export class DiscoveryService {
   }
 
   private loadJwksFromStorage = () => {
-    const jwks = this.cacheService.get<JWKS>('jwks');
+    const jwks = this.storageService.get<JWKS>('jwks');
 
     return jwks;
   };
@@ -85,9 +85,9 @@ export class DiscoveryService {
     try {
       const jwks = await this.httpService.get<JWKS>(uri);
 
-      this.cacheService.set('jwks', jwks);
+      this.storageService.set('jwks', jwks);
 
-      this.authStateService.emitEvent('JwksLoaded');
+      this.eventService.emitEvent('JwksLoaded');
 
       return jwks;
     } catch (e) {
