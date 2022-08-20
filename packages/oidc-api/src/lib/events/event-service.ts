@@ -1,8 +1,11 @@
+import { AuthenticationState } from './auth-state';
 import { Event } from './events';
 
-export class AuthStateService {
+export class EventService {
   private authState = AuthenticationState.Unauthenticated;
+
   private onAuthStateChange?: (authState: AuthenticationState) => void;
+  
   private onEvent?: (event: Event) => void;
 
   public getAuthState(): AuthenticationState {
@@ -29,8 +32,4 @@ export class AuthStateService {
   };
 }
 
-export enum AuthenticationState {
-  Unauthenticated = 'unauthenticated',
-  Authenticating = 'authenticating',
-  Authenticated = 'authenticated',
-}
+
