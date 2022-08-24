@@ -4,10 +4,10 @@ import {
   BrowserStorageService,
   OIDCApi,
   QueryParams,
-} from 'packages/oidc-client/src';
+} from 'libs/oidc-client/src';
 import { catchError, of, ReplaySubject, throwError } from 'rxjs';
 import { AUTH_CONFIG } from './injection-token';
-import { Event } from 'packages/oidc-client/src';
+import { Event } from 'libs/oidc-client/src';
 
 @Injectable({
   providedIn: 'root',

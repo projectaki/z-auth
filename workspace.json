@@ -4,9 +4,10 @@
     "docs": "apps/docs",
     "next-demo": "apps/next-demo",
     "next-demo-e2e": "apps/next-demo-e2e",
-    "oidc-client": "packages/oidc-client",
+    "oidc-client": "libs/oidc-client",
     "oidc-client-angular": "libs/oidc-client-angular",
-    "oidc-utils": "packages/oidc-utils",
+    "oidc-server": "libs/oidc-server",
+    "oidc-utils": "libs/oidc-utils",
     "sample-auth": "apps/sample-auth",
     "utils": "apps/utils"
   }
