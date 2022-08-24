@@ -1,5 +1,5 @@
 {
-  "sourceRoot": "packages/oidc-utils/src",
+  "sourceRoot": "libs/oidc-client/src",
   "targets": {
     "build": {
       "executor": "@nrwl/js:tsc",
@@ -7,11 +7,11 @@
         "{options.outputPath}"
       ],
       "options": {
-        "outputPath": "dist/packages/oidc-utils",
-        "main": "packages/oidc-utils/src/index.ts",
-        "tsConfig": "packages/oidc-utils/tsconfig.lib.json",
+        "outputPath": "dist/libs/oidc-client",
+        "main": "libs/oidc-client/src/index.ts",
+        "tsConfig": "libs/oidc-client/tsconfig.lib.json",
         "assets": [
-          "packages/oidc-utils/*.md"
+          "libs/oidc-client/*.md"
         ]
       }
     },
@@ -22,17 +22,17 @@
       ],
       "options": {
         "lintFilePatterns": [
-          "packages/oidc-utils/**/*.ts"
+          "libs/oidc-client/**/*.ts"
         ]
       }
     },
     "test": {
       "executor": "@nrwl/jest:jest",
       "outputs": [
-        "coverage/packages/oidc-utils"
+        "coverage/libs/oidc-client"
       ],
       "options": {
-        "jestConfig": "packages/oidc-utils/jest.config.ts",
+        "jestConfig": "libs/oidc-client/jest.config.ts",
         "passWithNoTests": true
       }
     }
