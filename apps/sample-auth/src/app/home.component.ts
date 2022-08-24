@@ -1,11 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { AuthenticationState } from '@z-auth/oidc-api';
+import { AuthenticationState } from '@z-auth/oidc-client';
 import {
   AUTH_CONFIG,
   base64Decode,
   OidcService,
-} from '@z-auth/oidc-api-angular';
+} from '@z-auth/oidc-client-angular';
 import { map } from 'rxjs';
 
 @Component({

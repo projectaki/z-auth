@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { OidcService } from '@z-auth/oidc-api-angular';
+import { OidcService } from '@z-auth/oidc-client-angular';
 
 @Component({
   selector: 'zap-io-test-page',

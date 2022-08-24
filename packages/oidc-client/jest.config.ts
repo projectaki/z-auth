@@ -1,6 +1,6 @@
 /* eslint-disable */
 export default {
-  displayName: 'oidc-api',
+  displayName: 'oidc-client',
   preset: '../../jest.preset.js',
   globals: {
     'ts-jest': {
@@ -11,5 +11,5 @@ export default {
     '^.+\\.[tj]s$': 'ts-jest',
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
-  coverageDirectory: '../../coverage/packages/oidc-api',
+  coverageDirectory: '../../coverage/packages/oidc-client',
 };

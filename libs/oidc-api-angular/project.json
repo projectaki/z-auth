@@ -1,22 +1,22 @@
 {
   "projectType": "library",
-  "sourceRoot": "libs/oidc-api-angular/src",
+  "sourceRoot": "libs/oidc-client-angular/src",
   "prefix": "z-auth",
   "targets": {
     "build": {
       "executor": "@nrwl/angular:package",
       "outputs": [
-        "dist/libs/oidc-api-angular"
+        "dist/libs/oidc-client-angular"
       ],
       "options": {
-        "project": "libs/oidc-api-angular/ng-package.json"
+        "project": "libs/oidc-client-angular/ng-package.json"
       },
       "configurations": {
         "production": {
-          "tsConfig": "libs/oidc-api-angular/tsconfig.lib.prod.json"
+          "tsConfig": "libs/oidc-client-angular/tsconfig.lib.prod.json"
         },
         "development": {
-          "tsConfig": "libs/oidc-api-angular/tsconfig.lib.json"
+          "tsConfig": "libs/oidc-client-angular/tsconfig.lib.json"
         }
       },
       "defaultConfiguration": "production"
@@ -24,10 +24,10 @@
     "test": {
       "executor": "@nrwl/jest:jest",
       "outputs": [
-        "coverage/libs/oidc-api-angular"
+        "coverage/libs/oidc-client-angular"
       ],
       "options": {
-        "jestConfig": "libs/oidc-api-angular/jest.config.ts",
+        "jestConfig": "libs/oidc-client-angular/jest.config.ts",
         "passWithNoTests": true
       }
     },
@@ -35,8 +35,8 @@
       "executor": "@nrwl/linter:eslint",
       "options": {
         "lintFilePatterns": [
-          "libs/oidc-api-angular/**/*.ts",
-          "libs/oidc-api-angular/**/*.html"
+          "libs/oidc-client-angular/**/*.ts",
+          "libs/oidc-client-angular/**/*.html"
         ]
       }
     }
