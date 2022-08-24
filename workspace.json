@@ -4,8 +4,8 @@
     "docs": "apps/docs",
     "next-demo": "apps/next-demo",
     "next-demo-e2e": "apps/next-demo-e2e",
-    "oidc-api": "packages/oidc-api",
-    "oidc-api-angular": "libs/oidc-api-angular",
+    "oidc-client": "packages/oidc-client",
+    "oidc-client-angular": "libs/oidc-client-angular",
     "oidc-utils": "packages/oidc-utils",
     "sample-auth": "apps/sample-auth",
     "utils": "apps/utils"

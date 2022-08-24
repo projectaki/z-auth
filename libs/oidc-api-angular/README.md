@@ -1,7 +1,7 @@
-# oidc-api-angular
+# oidc-client-angular
 
 This library was generated with [Nx](https://nx.dev).
 
 ## Running unit tests
 
-Run `nx test oidc-api-angular` to execute the unit tests.
+Run `nx test oidc-client-angular` to execute the unit tests.

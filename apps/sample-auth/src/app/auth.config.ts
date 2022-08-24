@@ -1,4 +1,4 @@
-import { AuthConfig } from '@z-auth/oidc-api-angular';
+import { AuthConfig } from '@z-auth/oidc-client-angular';
 
 export const authConfig: AuthConfig = {
   issuer: 'https://identity-auth.eu.auth0.com',

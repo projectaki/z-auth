@@ -1,6 +1,6 @@
 /* eslint-disable */
 export default {
-  displayName: 'oidc-api-angular',
+  displayName: 'oidc-client-angular',
   preset: '../../jest.preset.js',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
   globals: {
@@ -9,7 +9,7 @@ export default {
       stringifyContentPathRegex: '\\.(html|svg)$',
     },
   },
-  coverageDirectory: '../../coverage/libs/oidc-api-angular',
+  coverageDirectory: '../../coverage/libs/oidc-client-angular',
   transform: {
     '^.+\\.(ts|mjs|js|html)$': 'jest-preset-angular',
   },

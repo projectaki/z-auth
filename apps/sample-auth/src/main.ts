@@ -11,7 +11,7 @@ import { environment } from './environments/environment';
 import { RouterModule } from '@angular/router';
 import { routes } from './app/routes';
 import { authConfig } from './app/auth.config';
-import { AUTH_CONFIG, OidcService } from '@z-auth/oidc-api-angular';
+import { AUTH_CONFIG, OidcService } from '@z-auth/oidc-client-angular';
 
 if (environment.production) {
   enableProdMode();
